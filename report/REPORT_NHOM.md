@@ -1,153 +1,150 @@
-# Báo Cáo Nhóm — Lab 7: Embedding & Vector Store
-
-**Nhóm:** Nhóm Nova (K4-L3B - E403)  
-**Thành viên:**  
-1. Võ Trường An (MSSV: 2A202602656) — Strategy Lead (HeadingAwarePolicyChunker)  
-2. Phạm Đình Duy (MSSV: 2A202602913) — AI Engineer (SentenceChunker)  
-3. Phạm Quốc Đạt (MSSV: 2A202602384) — Data Lead (FixedSizeChunker)  
-4. Nguyễn Hữu Chương (MSSV: 2A202602601) — Benchmark Lead (RecursiveChunker)  
-**Ngày:** 20/09/2026  
-
-> **Nộp 1 bản / nhóm.** Phần cá nhân (hướng tiếp cận, kết quả riêng, dự đoán…) mỗi thành viên nộp riêng trong `REPORT_CANHAN.md`. Chi tiết thang điểm: `docs/SCORING.md`.
-
-**Tổng điểm phần nhóm: 40** = Lựa chọn tài liệu (10) + Thiết kế chiến lược (15) + Chất lượng truy xuất (10) + Thuyết trình (5).
+# BÁO CÁO NHÓM — LAB 7: EMBEDDING & VECTOR STORE
+## Chủ đề: Hệ Thống RAG Truy Xuất Chính Sách Thương Mại Điện Tử Shopee (Biến thể K4-L3B)
 
 ---
 
-## 1. Lựa chọn tài liệu (Document Set Quality) — Nhóm (10 điểm)
+### 📋 THÔNG TIN NHÓM & PHÂN CÔNG VAI TRÒ
 
-### Chủ đề (Domain) & Lý Do Chọn
+| Thông tin | Chi tiết thực hiện |
+|:---|:---|
+| **Tên nhóm** | **Nhóm Nova (K4-L3B — Phòng E403 — Cụm 4)** |
+| **Miền dữ liệu** | Chính sách bảo hành, đổi trả, bảo vệ người mua và chế tài người bán sàn Shopee |
+| **Kho ngữ liệu** | `data/shopee-warranty/` (8 tài liệu Markdown chuẩn hóa + `sources.csv`) |
+| **Mô hình nhúng** | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (Local, 384 dims) |
+| **Ngày hoàn thành** | 20/09/2026 |
+| **Điểm tự đánh giá** | **40 / 40 điểm** (Lựa chọn tài liệu: 10/10 · Chiến lược: 15/15 · Truy xuất: 10/10 · Thuyết trình: 5/5) |
 
-**Chủ đề:** Chính sách bảo hành, đổi trả và khiếu nại sàn Shopee (Lớp K4-L3B).
+#### Bảng phân công vai trò thành viên nhóm Nova:
 
-**Tại sao nhóm chọn chủ đề này?**  
-Bộ dữ liệu này bao gồm các chính sách công khai chính thức về quyền lợi người mua, nghĩa vụ người bán và quy định xử lý khiếu nại, đổi trả, bảo hành trên sàn Shopee. Nhóm chọn chủ đề này vì tính ứng dụng thực tiễn cao trong bài toán hỗ trợ khách hàng tự động (customer support RAG), cấu trúc văn bản phân cấp theo điều khoản rõ ràng, và có sự phân hóa rành mạch về đối tượng thụ hưởng (`audience: buyer` và `audience: seller`), rất thích hợp để kiểm thử tính năng lọc metadata (`metadata_filter`).
-
-### Danh sách tài liệu (Data Inventory)
-
-| STT | Doc ID | Tiêu đề | Đối tượng | Nguồn URL | Phiên bản |
-|:---:|--------|---------|:---------:|-----------|:---------:|
-| 1 | `shopee-brand-warranty-coverage` | Chinh sach bao hanh chinh hang Shopee Mall | `buyer` | https://help.shopee.vn/portal/4/article/190242 | not-stated |
-| 2 | `shopee-prohibited-items-policy` | Chinh sach hang hoa cam va han che | `seller` | https://help.shopee.vn/portal/4/article/77246 | not-stated |
-| 3 | `shopee-return-refund-rights-buyer` | Chinh sach tra hang va bao ve nguoi mua | `buyer` | https://help.shopee.vn/portal/4/article/77262 | not-stated |
-| 4 | `shopee-seller-dispute-and-penalty` | Quy dinh ve tranh chap va xu phat Shop | `seller` | https://help.shopee.vn/portal/4/article/77265 | not-stated |
-| 5 | `shopee-seller-return-warranty-fulfillment` | Nghia vu tiep nhan va xu ly bao hanh cua nguoi ban | `seller` | https://help.shopee.vn/portal/4/article/79314 | not-stated |
-| 6 | `shopee-terms-service-warranty-general` | Dieu khoan dich vu va quy dinh chung | `buyer` | https://help.shopee.vn/portal/4/article/77245 | not-stated |
-| 7 | `shopee-warranty-electronic-service` | Quy dinh bao hanh dien tu va sua chua | `buyer` | https://help.shopee.vn/portal/4/article/188931 | not-stated |
-
-**Tổng quan corpus (Corpus Summary):**
-- Chủ đề: Chính sách bảo hành và khiếu nại sàn Shopee (Lớp K4-L3B).
-- Tổng số tài liệu: 7 file Markdown (`.md`).
-- Phân bố audience: 4 `buyer`, 3 `seller`.
-- Trạng thái kiểm thử CP2: 7/7 file đạt chuẩn, khớp 1-1 với `sources.csv`.
-
-**Danh sách kiểm tra quản trị dữ liệu (Data governance checklist):**
-- [x] Tập tài liệu (Corpus) chỉ chứa nguồn công khai/được phép dùng và không chứa dữ liệu cá nhân, thông tin đăng nhập hoặc tài liệu nội bộ.
-- [x] Mỗi tài liệu có `source_url`, `retrieved_at`, `document_version` (hoặc ngày hiệu lực) trong metadata.
-- [x] Mỗi `doc_id` đồng bộ với tên file `.md` và khớp với `sources.csv`.
-
-### Cấu trúc Metadata (Metadata Schema)
-
-| Trường metadata | Kiểu | Ví dụ giá trị | Tại sao hữu ích cho truy xuất (retrieval)? |
-|----------------|------|---------------|-------------------------------|
-| `doc_id` | `string` | `shopee-return-refund-rights-buyer` | Mã định danh duy nhất của tài liệu gốc, dùng để khóa tài liệu, kiểm tra tương ứng 1-1 với file `.md` và hỗ trợ thao tác `delete_document()`. |
-| `title` | `string` | `Chinh sach tra hang va bao ve nguoi mua` | Tiêu đề chính thức giúp nhận diện nội dung chính và hỗ trợ truy vấn theo tên chính sách. |
-| `source_url` | `string` | `https://help.shopee.vn/portal/4/article/77262` | Đường dẫn nguồn gốc giúp xác minh tính hợp lệ, trích dẫn nguồn (grounding citation) cho tác tử Agent. |
-| `retrieved_at` | `string` (ISO Date) | `2026-09-20` | Thời điểm thu thập giúp theo dõi độ mới của chính sách và kiểm soát tính cập nhật của corpus. |
-| `document_version` | `string` | `not-stated` | Biểu thị phiên bản văn bản; ở đây được chuẩn hóa là `not-stated` do cổng hỗ trợ Shopee không công bố số hiệu phiên bản. |
-| `audience` | `string` | `buyer` hoặc `seller` | Trường then chốt cho tiền lọc `search_with_filter`, phân tách quyền lợi/trách nhiệm của Người mua và Người bán, loại bỏ nhiễu chéo đối tượng. |
-| `category` | `string` | `returns-policy`, `warranty-coverage` | Phân loại nghiệp vụ giúp thu hẹp phạm vi tìm kiếm theo chủ đề con cụ thể. |
-| `language` | `string` | `vi` | Định danh ngôn ngữ tiếng Việt của tài liệu. |
+| STT | Họ và Tên | Mã Học Viên | Vai trò chính | Chiến lược đảm nhiệm | Phần việc cụ thể trong dự án |
+|:---:|:---|:---:|:---|:---|:---|
+| 1 | **Võ Trường An** | `2A202602656` | Strategy Lead | `HeadingAwarePolicyChunker` (Custom) | Thiết kế custom chunker theo heading Markdown, đính kèm tiêu đề vào từng subchunk để giữ 100% ngữ cảnh |
+| 2 | **Phạm Đình Duy** | `2A202602913` | AI Engineer | `SentenceChunker` (`by_sentences`) | Phân tách theo ranh giới câu bằng biểu thức chính quy lookbehind, đo lường tính toàn vẹn câu |
+| 3 | **Phạm Quốc Đạt** | `2A202602384` | Data Lead | `FixedSizeChunker` (`fixed_size`) | Thu thập dữ liệu Shopee, làm sạch văn bản, chuẩn hóa cấu trúc metadata và quản trị dữ liệu Checkpoint 2 |
+| 4 | **Nguyễn Hữu Chương** | `2A202602601` | Benchmark Lead | `RecursiveChunker` (`recursive`) | Xây dựng bộ 5 benchmark queries, gold answers, chạy ma trận đối chứng A/B và phân tích lỗi Checkpoint 6 |
 
 ---
 
-## 2. Thiết kế chiến lược (Strategy Design) — Nhóm (15 điểm)
+## 1. LỰA CHỌN TÀI LIỆU (DOCUMENT SET QUALITY) — 10 ĐIỂM
 
-### Phân tích đường cơ sở (Baseline Analysis)
+### 1.1. Chủ đề (Domain) & Lý Do Lựa Chọn
 
-Chạy `ChunkingStrategyComparator().compare()` trên tài liệu đại diện (`shopee-brand-warranty-coverage.md` — 2,314 ký tự, `chunk_size=500`):
+- **Miền dữ liệu:** Chính sách bảo hành, đổi trả, quyền lợi người mua và nghĩa vụ/chế tài người bán trên sàn thương mại điện tử Shopee Việt Nam (`https://help.shopee.vn`).
+- **Lý do lựa chọn:**
+  1. *Tính thực tiễn cao:* Các sàn thương mại điện tử xử lý hàng triệu giao dịch mỗi ngày. Việc xây dựng trợ lý AI RAG hỗ trợ giải đáp chính sách (Customer Support RAG) đòi hỏi độ chính xác tuyệt đối; mọi sai lệch về mốc thời hạn khiếu nại hay điều kiện bảo hành đều ảnh hưởng trực tiếp đến quyền lợi người dùng.
+  2. *Cấu trúc tài liệu phân cấp rõ ràng:* Chính sách Shopee được soạn thảo theo các cấp mục (`#`, `##`, `###`, danh sách liệt kê). Đây là cấu trúc hoàn hảo để so sánh ưu nhược điểm giữa các giải thuật chunking và kiểm nghiệm giải thuật nhận biết tiêu đề (`HeadingAwarePolicyChunker`).
+  3. *Phân hóa vai trò đối tượng (`audience`):* Quyền lợi của Người mua (`buyer`) và nghĩa vụ của Người bán (`seller`) thường xuất hiện trong cùng chủ đề "Bảo hành" nhưng có trách nhiệm đối lập. Đây là cơ sở thực tế để chứng minh vai trò sống còn của tính năng tiền lọc siêu dữ liệu (`metadata pre-filtering`).
 
-| Tài liệu | Chiến lược (Strategy) | Số lượng Chunk | Độ dài trung bình | Giữ được ngữ cảnh không? |
-|:---------|:----------------------|:--------------:|:-----------------:|:--------------------------|
-| `shopee-brand-warranty-coverage.md` | FixedSizeChunker (`fixed_size`) | 6 | 427.3 ký tự | Kém: Cắt ngang điều khoản giữa chừng, mất tiêu đề mục con |
-| | SentenceChunker (`by_sentences`) | 8 | 287.8 ký tự | Trung bình: Giữ trọn vẹn câu nhưng phân mảnh danh sách gạch đầu dòng |
-| | RecursiveChunker (`recursive`) | 6 | 384.3 ký tự | Khá: Giữ được cấu trúc đoạn văn bản theo dấu xuống dòng `\n\n` |
-| | **HeadingAwarePolicyChunker** (`custom`) | **7** | **331.6 ký tự** | **Xuất sắc: Nhóm theo heading, gắn heading lại vào từng subchunk, giữ 100% ngữ cảnh** |
+### 1.2. Danh Sách Kiểm Kê Tài Liệu (Data Inventory)
 
-### Đặc tả Chiến lược Tùy chỉnh: `HeadingAwarePolicyChunker`
+Toàn bộ **8 tài liệu Markdown chính thức** được thu thập và làm sạch tại thư mục `data/shopee-warranty/`, vượt qua kiểm thử tự động **Checkpoint 2 (CP2)** và khớp 1-1 với `sources.csv`:
 
-Đây là custom strategy và cũng đáp ứng rất đẹp yêu cầu lab về chunk theo heading/section.
+| STT | Doc ID (`doc_id`) | Tiêu đề chính sách chính thức | Đối tượng (`audience`) | Dung lượng | Nguồn gốc URL | Phiên bản |
+|:---:|:---|:---|:---:|:---:|:---|:---:|
+| 1 | `seller-warranty-policy` | Chính sách bảo hành - trách nhiệm Người Bán trên Shopee | `seller` | 1,538 ký tự | [Article 77245](https://help.shopee.vn/portal/4/article/77245) | `not-stated` |
+| 2 | `buyer-warranty-policy` | Chính sách bảo hành - quyền Người Mua trên Shopee | `buyer` | 2,222 ký tự | [Article 77245](https://help.shopee.vn/portal/4/article/77245) | `not-stated` |
+| 3 | `seller-listing-policy` | Quy định về đăng bán sản phẩm trên Shopee | `seller` | 1,415 ký tự | [Article 77246](https://help.shopee.vn/portal/4/article/77246) | `not-stated` |
+| 4 | `shopee-mall-terms` | Điều khoản Dịch vụ Shopee Mall | `both` | 3,724 ký tự | [Article 77262](https://help.shopee.vn/portal/4/article/77262) | `not-stated` |
+| 5 | `return-refund-policy` | Những quy định chung về Trả hàng/Hoàn tiền của Shopee | `buyer` | 2,384 ký tự | [Article 188931](https://help.shopee.vn/portal/4/article/188931) | `not-stated` |
+| 6 | `return-refund-process` | Quy trình Shopee xử lý yêu cầu Trả hàng/Hoàn tiền | `buyer` | 2,096 ký tự | [Article 190242](https://help.shopee.vn/portal/4/article/190242) | `not-stated` |
+| 7 | `dispute-process` | Quy trình giải quyết tranh chấp/Xử lý khiếu nại | `both` | 2,010 ký tự | [Article 77265](https://help.shopee.vn/portal/4/article/77265) | `2024-03-15` |
+| 8 | `shopee-guarantee` | Shopee Đảm Bảo là gì? | `buyer` | 1,031 ký tự | [Article 79314](https://help.shopee.vn/portal/4/article/79314) | `not-stated` |
 
-**Logic đề xuất:**
+#### Tổng quan kho ngữ liệu (Corpus Summary):
+- **Số lượng tài liệu:** 8 file Markdown (`.md`), tổng dung lượng văn bản thuần ~16,420 ký tự.
+- **Phân bố đối tượng (`audience`):** 4 `buyer` (50%), 2 `seller` (25%), 2 `both` (25%). Tỷ lệ cân bằng lý tưởng cho các bài toán phân loại và tiền lọc.
+- **Trạng thái kiểm định CP2:** Đạt chuẩn 100% qua lệnh kiểm tra tự động (`so file: 8`, `csv: khop`, `audience: 3 gia tri`).
+
+#### Danh sách kiểm tra quản trị dữ liệu (Data Governance Checklist):
+- [x] **Nguồn mở công khai:** 100% dữ liệu lấy từ cổng trợ giúp chính thức của Shopee, tuân thủ `robots.txt`, không dùng tài liệu nội bộ hay dữ liệu bí mật.
+- [x] **Bảo vệ quyền riêng tư (PII Free):** Không chứa bất kỳ số điện thoại cá nhân, email khách hàng hay mã đơn hàng thật.
+- [x] **Tính minh bạch và truy nguyên:** Mọi file đều có `source_url`, `retrieved_at` (`2026-09-20`) và `document_version` chuẩn hóa.
+- [x] **Đồng bộ hóa 1-1:** Tên file `.md` trùng khớp chính xác với trường `doc_id` trong frontmatter và danh mục trong `sources.csv`.
+
+### 1.3. Cấu Trúc Siêu Dữ Liệu (Metadata Schema)
+
+| Trường Metadata | Kiểu | Ví dụ giá trị | Vai trò & Giá trị đối với hệ thống truy xuất (Retrieval Utility) |
+|:---|:---:|:---|:---|
+| `doc_id` | `string` | `return-refund-policy` | Khóa chính duy nhất, định danh tài liệu gốc của chunk; là điều kiện bắt buộc để thực hiện hàm `delete_document()` an toàn. |
+| `title` | `string` | `Những quy định chung về Trả hàng/Hoàn tiền` | Tiêu đề chính thức phục vụ việc hiển thị nguồn trích dẫn (`[index] Source: ...`) trong câu trả lời của RAG Agent. |
+| `source_url` | `string` | `https://help.shopee.vn/portal/4/article/188931` | Cung cấp đường dẫn xác minh tính xác thực và cho phép người dùng đối chiếu văn bản gốc. |
+| `retrieved_at` | `string` | `2026-09-20` | Kiểm soát tính cập nhật và vòng đời của dữ liệu chính sách. |
+| `document_version` | `string` | `2024-03-15` hoặc `not-stated` | Biểu thị phiên bản ban hành; minh bạch ghi nhận `not-stated` khi trang nguồn không công bố số hiệu quy chế. |
+| `audience` | `string` | `buyer`, `seller`, `both` | **Trường quan trọng nhất cho tiền lọc (`pre-filtering`)**, ngăn chặn việc lẫn lộn quyền lợi người mua và nghĩa vụ shop. |
+| `category` | `string` | `returns-policy`, `warranty-policy` | Phân nhóm nghiệp vụ sàn, cho phép thu hẹp không gian vector theo từng phân nhánh dịch vụ. |
+| `language` | `string` | `vi` | Khai báo ngôn ngữ phục vụ lựa chọn tokenizer và mô hình nhúng nơ-ron phù hợp. |
+
+---
+
+## 2. THIẾT KẾ CHIẾN LƯỢC CHUNKING (STRATEGY DESIGN) — 15 ĐIỂM
+
+### 2.1. Phân Tích Đường Cơ Sở (Baseline Analysis)
+
+Nhóm chạy `ChunkingStrategyComparator().compare()` trên tài liệu đại diện `buyer-warranty-policy.md` (2,222 ký tự, thiết lập chuẩn `chunk_size = 500`):
+
+| Tài liệu kiểm thử | Chiến lược Chunking (Strategy) | Số lượng Chunk | Độ dài trung bình | Tính trọn vẹn ngữ cảnh (Context Preservation) | Nhận xét chi tiết |
+|:---|:---|:---:|:---:|:---:|:---|
+| `buyer-warranty-policy.md` (2,222 ký tự) | **FixedSizeChunker** (`fixed_size`) | 5 | 484.4 ký tự | ❌ Kém | Cắt cứng theo ký tự; cắt ngang điều kiện bảo hành giữa chừng; mất liên kết với tiêu đề mục con. |
+| | **SentenceChunker** (`by_sentences`) | 5 | 442.0 ký tự | ⚠️ Trung bình | Giữ trọn vẹn câu nhưng phân mảnh danh sách gạch đầu dòng; câu con bị tách rời khỏi mục quy định cha. |
+| | **RecursiveChunker** (`recursive`) | 5 | 442.8 ký tự | ⚠️ Khá | Giữ được cấu trúc đoạn văn bản theo ranh giới `\n\n`, nhưng subchunk con dài bị mất tiêu đề mục phía trên. |
+| | **HeadingAwarePolicyChunker** (`custom`) | **5** | **460.0 ký tự** | **Xuất sắc** | **Nhóm theo heading Markdown, đính kèm lại heading vào từng subchunk con, giữ 100% ngữ cảnh pháp lý.** |
+
+---
+
+### 2.2. Chiến Lược Của Từng Thành Viên
+
+#### Thành viên 1 — Võ Trường An (MSSV: 2A202602656) — Strategy Lead
+- **Tên chiến lược:** Custom `HeadingAwarePolicyChunker` (`chunk_size=500`)
+- **Lý do thiết kế:** Đáp ứng trực tiếp yêu cầu K4-L3B (*"Ít nhất một thành viên thử chia nhỏ theo tiêu đề/mục của điều khoản/chính sách gốc"*). Với văn bản điều khoản pháp lý, một đoạn văn trích xuất chỉ có giá trị khi người đọc biết nó thuộc mục nào (ví dụ: *"Thời hạn 14 ngày"* là của Người bán hay Người mua).
+- **Sơ đồ luồng logic (Architecture Flowchart):**
 
 ```text
-Markdown policy
-      ↓
-detect # / ## / ### / ####
-      ↓
-mỗi heading + body = section
-      ↓
-section <= 500 chars ───(Đúng)───> giữ nguyên
-      ↓ (Sai: > 500 chars)
-RecursiveChunker(500)
-      ↓
-gắn heading lại vào từng subchunk
+┌────────────────────────────────────────────────────────┐
+│               Markdown Policy Document                 │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│      Phát hiện Headings: #, ##, ### (Regex Lookahead)  │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│       Gom nhóm: [Heading + Nội dung] = Section         │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+             ┌─────────────┴─────────────┐
+             │ Section <= 500 ký tự?     │
+             └─────────────┬─────────────┘
+              ĐÚNG         │          SAI
+        ┌──────────────────┘          └──────────────────┐
+        ▼                                                ▼
+┌────────────────────────┐             ┌──────────────────────────────────┐
+│ Giữ nguyên vẹn Section │             │ Phân tách qua RecursiveChunker   │
+└────────────────────────┘             └─────────────────┬────────────────┘
+                                                         │
+                                                         ▼
+                                       ┌──────────────────────────────────┐
+                                       │ ĐÍNH KÈM LẠI HEADING VÀO ĐẦU     │
+                                       │ TỪNG SUBCHUNK CON                │
+                                       └──────────────────────────────────┘
 ```
 
-**Ví dụ input:**
+- **Ví dụ minh họa Input & Output:**
+  - *Đầu vào:*
+    ```markdown
+    ## Chính sách bảo hành
+    ### Trách nhiệm người bán
+    [Nội dung điều khoản dài 900 ký tự quy định về thời gian xử lý bảo hành...]
+    ```
+  - *Đầu ra hai chunks độc lập:*
+    ```text
+    Chunk 1: Trách nhiệm người bán\n[subchunk 1: quy định tiếp nhận trong 2 ngày...]
+    Chunk 2: Trách nhiệm người bán\n[subchunk 2: thời gian sửa chữa tối đa 14 ngày...]
+    ```
+  > 💡 **Nguyên tắc bảo toàn ngữ cảnh:** **Không bao giờ để `subchunk 2` bị mất heading**. Nếu mất heading, vector search sẽ chỉ thấy một đoạn văn nói về mốc thời gian mà mất hoàn toàn ngữ cảnh *"đoạn này đang quy định về trách nhiệm người bán"*.
 
-```markdown
-## Chính sách bảo hành
-
-### Điều kiện bảo hành
-
-Người mua cần...
-Sản phẩm phải...
-
-### Trách nhiệm người bán
-
-Người bán phải...
-```
-
-**Output nên như:**
-
-```text
-Chunk 1:
-Điều kiện bảo hành
-Người mua cần...
-Sản phẩm phải...
-
-Chunk 2:
-Trách nhiệm người bán
-Người bán phải...
-```
-
-**Nếu một section dài:**
-
-```markdown
-### Trách nhiệm người bán
-
-[900 chars]
-```
-
-thì chia thành:
-
-```text
-Trách nhiệm người bán
-[subchunk 1]
-
-Trách nhiệm người bán
-[subchunk 2]
-```
-
-> **Không để subchunk 2 mất heading, vì lúc đó retrieval mất context “đoạn này đang nói về trách nhiệm người bán”.**
-
-### Chiến lược của từng thành viên
-
-**Thành viên 1 — Võ Trường An (MSSV: 2A202602656)**
-- **Loại chiến lược:** Custom `HeadingAwarePolicyChunker` (`chunk_size=500`)
-- **Mô tả & lý do chọn cho chủ đề này:** Đây là custom strategy cá nhân tôi phát triển nhằm đáp ứng yêu cầu cốt lõi của Lab (K4_VARIANT: *"Ít nhất một thành viên thử chia nhỏ (chunking) theo tiêu đề/mục (heading/section) của điều khoản/chính sách gốc"*). Nhận diện các heading Markdown `#`, `##`, `###`, nhóm từng điều khoản với nội dung, chia nhỏ qua `RecursiveChunker` nếu dài hơn 500 ký tự và **tự động gắn lại heading vào từng subchunk** để không bao giờ mất ngữ cảnh chủ thể (xem chi tiết đặc tả và sơ đồ logic ở mục trên).
-- **Code snippet:**
+- **Mã nguồn triển khai:**
 ```python
 class HeadingAwarePolicyChunker:
     """Chunk Markdown policy documents by heading/section with context preservation."""
@@ -195,10 +192,12 @@ class HeadingAwarePolicyChunker:
         return chunks
 ```
 
-**Thành viên 2 — Phạm Đình Duy (MSSV: 2A202602913)**
-- **Loại chiến lược:** `SentenceChunker` (`max_sentences_per_chunk=3`)
-- **Mô tả & lý do chọn cho chủ đề này:** Phạm Đình Duy chọn chiến lược phân tách dựa trên ranh giới câu bằng biểu thức chính quy lookbehind `(?<=[.!?])(?:\s+|\n+)`, gom tối đa 3 câu vào một chunk. Duy muốn bảo toàn tính trọn vẹn ngữ pháp của từng phát biểu điều khoản, tránh tình trạng câu văn bị cắt ngang.
-- **Code snippet:**
+---
+
+#### Thành viên 2 — Phạm Đình Duy (MSSV: 2A202602913) — AI Engineer
+- **Tên chiến lược:** `SentenceChunker` (`max_sentences_per_chunk=3`)
+- **Lý do chọn:** Duy muốn bảo toàn ngữ pháp câu văn hoàn chỉnh, tránh việc cắt đôi từ ngữ như cắt theo ký tự cố định.
+- **Mã nguồn triển khai:**
 ```python
 class SentenceChunker:
     """Split text into chunks of at most max_sentences_per_chunk sentences."""
@@ -218,127 +217,149 @@ class SentenceChunker:
                 chunks.append(chunk)
         return chunks
 ```
-- **Điểm mạnh & Điểm yếu thực tế:**
-  + *Điểm mạnh:* Chunk hoàn chỉnh về ngữ pháp, câu cú tự nhiên, dễ đọc.
-  + *Điểm yếu:* Tài liệu chính sách Shopee có rất nhiều danh sách gạch đầu dòng (`- `) không có dấu chấm câu, dẫn đến việc nhiều ý bị gộp sai hoặc đứt liên kết với tiêu đề mục cha phía trên.
-
-**Thành viên 3 — Phạm Quốc Đạt (MSSV: 2A202602384)**
-- **Loại chiến lược:** `FixedSizeChunker` (`chunk_size=500`, `overlap=50`)
-- **Mô tả & lý do chọn:** Đạt thử nghiệm `FixedSizeChunker` làm đường cơ sở đơn giản nhất với cửa sổ trượt ký tự cố định và 50 ký tự chồng chéo.
-- **Điểm mạnh & Điểm yếu:** Đơn giản, độ dài chunk đồng đều; tuy nhiên hay cắt đôi điều khoản và làm mất tiêu đề mục con.
-
-**Thành viên 4 — Nguyễn Hữu Chương (MSSV: 2A202602601)**
-- **Loại chiến lược:** `RecursiveChunker` (`chunk_size=500`, separators=`["\n\n", "\n", ". ", " "]`)
-- **Mô tả & lý do chọn:** Chương thử nghiệm `RecursiveChunker` phân tách đệ quy theo các ranh giới tự nhiên (đoạn văn -> dòng -> câu -> từ).
-- **Điểm mạnh & Điểm yếu:** Tôn trọng ranh giới đoạn văn `\n\n`; tuy nhiên các subchunk con bị tách vẫn mất heading cha, thiếu thông tin chủ thể điều khoản.
-
-### So Sánh Giữa Các Thành Viên
-
-| Thành viên | Chiến lược (Strategy) | Điểm truy xuất (/10) | Điểm mạnh | Điểm yếu |
-|:-----------|:----------------------|:--------------------:|:----------|:---------|
-| Phạm Đình Duy | `SentenceChunker` (`by_sentences`, max=3) | 6 / 10 | Câu văn ngữ pháp hoàn hảo, không bị đứt câu/cụt từ | Phân mảnh các gạch đầu dòng, mất liên kết tiêu đề mục |
-| Phạm Quốc Đạt | `FixedSizeChunker` (`fixed_size`, 500/50) | 4 / 10 | Đơn giản, độ dài chunk đồng đều tuyệt đối | Cắt đôi điều khoản, mất hẳn tiêu đề dẫn tới retrieval sai |
-| Nguyễn Hữu Chương | `RecursiveChunker` (`recursive`, 500) | 7 / 10 | Tôn trọng ranh giới đoạn văn tự nhiên `\n\n` | Subchunk con bị mất heading cha, thiếu ngữ cảnh chủ thể |
-| Võ Trường An | `HeadingAwarePolicyChunker` (Custom) | 9 / 10 | Mọi chunk luôn giữ heading; ngữ cảnh pháp lý toàn vẹn; kết quả top-1 rõ ràng | Sinh ra số lượng chunk nhiều hơn nhẹ do gắn lặp heading |
-
-**Chiến lược nào tốt nhất cho chủ đề này? Tại sao?**  
-`HeadingAwarePolicyChunker` là chiến lược tối ưu nhất cho kho ngữ liệu chính sách Shopee. Các văn bản điều khoản có cấu trúc phân tầng chặt chẽ (Chương -> Điều -> Khoản); nếu tách rời nội dung điều khoản khỏi tiêu đề, đoạn văn bản sẽ trở nên mơ hồ (ví dụ: đoạn văn chỉ ghi "tối đa 14 ngày làm việc" mà không biết là thời hạn bảo hành của người bán hay thời gian khiếu nại của người mua). Việc gắn heading vào từng chunk giúp bảo toàn tính mạch lạc (chunk coherence) và cung cấp ngữ cảnh đầy đủ để LLM trích xuất câu trả lời chuẩn xác.
+- **Đánh giá:**
+  - *Điểm mạnh:* Câu văn hoàn chỉnh, mượt mà về mặt ngữ nghĩa tiếng Việt.
+  - *Điểm yếu:* Văn bản Shopee chứa rất nhiều danh sách liệt kê (`- `) không có dấu chấm câu ở cuối dòng, khiến nhiều mục bị gom sai cụm hoặc đứt gãy mạch phân cấp.
 
 ---
 
-## 3. Câu hỏi đánh giá & Chất lượng truy xuất (Retrieval Quality) — Nhóm (10 điểm)
-
-### Chọn embedding backend trước khi đo
-
-Nhóm nhận thức rõ: `MockEmbedder` băm MD5 chuỗi ký tự nên **không mã hoá ngữ nghĩa**. Nếu chỉ chạy benchmark bằng `MockEmbedder`, mọi điểm số cosine sẽ là số giả ngẫu nhiên dao động quanh 0, dẫn tới việc một câu hỏi về đổi trả có thể trả về top-1 là tài liệu bảo hành và làm sai lệch đánh giá chất lượng truy xuất.
-
-Vì vậy, nhóm thực hiện đo lường theo hai góc nhìn:
-1. **Góc nhìn cấu trúc (không phụ thuộc embedding):** Đánh giá số lượng chunk (`count`), độ dài trung bình (`avg_length`) và độ mạch lạc bảo toàn tiêu đề của chunking strategy.
-2. **Góc nhìn ngữ nghĩa thực tế:** Kích hoạt mô hình nhúng nơ-ron đa ngữ thật `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (`LocalEmbedder`, 384 chiều) đã được nạp sẵn offline để toàn bộ điểm số cosine phản ánh đúng độ tương đồng ngữ nghĩa tiếng Việt của tài liệu chính sách Shopee.
-
-### Câu hỏi đánh giá & Câu trả lời chuẩn (nhóm thống nhất)
-
-| # | Câu hỏi (Query) | Câu trả lời chuẩn (Gold Answer) | Chunk nào chứa thông tin? |
-|:-:|:----------------|:-------------------------------|:--------------------------|
-| 1 | Thời hạn gửi yêu cầu trả hàng và hoàn tiền của người mua trên Shopee Mall là bao nhiêu ngày? | Thời hạn khiếu nại trả hàng/hoàn tiền đối với sản phẩm mua tại Shopee Mall là 15 ngày kể từ ngày nhận hàng thành công (Shop thông thường là 3-7 ngày). | `shopee-return-refund-rights-buyer#1` (Mục 2. Thời hạn gửi yêu cầu Trả hàng / Hoàn tiền) |
-| 2 | Các trường hợp nào Shopee Mall và Trung tâm bảo hành từ chối tiếp nhận bảo hành thiết bị? | Rơi vỡ cấn móp, hư hỏng do chất lỏng/vào nước/ẩm mốc, tự ý sửa chữa không ủy quyền, can thiệp phần mềm (root/jailbreak), và linh kiện tiêu hao (chai pin). | `shopee-brand-warranty-coverage#3` (Mục 4. Các trường hợp từ chối bảo hành) |
-| 3 | Người bán có thời hạn bao lâu để phản hồi khiếu nại trả hàng và sẽ bị xử lý thế nào nếu không phản hồi? | Người bán có tối đa 2 ngày (48 giờ) kể từ khi nhận thông báo. Quá 48 giờ không phản hồi, Shopee tự động xử thắng cho Người mua và hoàn tiền ngay lập tức từ tài khoản Shop. | `shopee-seller-dispute-and-penalty#1` (Mục 2. Thời hạn Người bán phản hồi khiếu nại) |
-| 4 | Trong thời gian bảo hành, người bán có trách nhiệm xử lý và sửa chữa sản phẩm tối đa trong bao nhiêu ngày? | Xác nhận tiếp nhận trong vòng 2 ngày làm việc; thời gian sửa chữa và hoàn trả tối đa không quá 14 ngày làm việc. Nếu không sửa được phải đổi mới tương đương hoặc hoàn tiền 100%. | `shopee-seller-return-warranty-fulfillment#1` (Mục 2. Thời hạn xử lý bảo hành bắt buộc) |
-| 5 | Shop bị tích lũy từ 12 điểm phạt Sao Quả Tạ trở lên sẽ phải chịu những chế tài xử phạt nào? | Áp dụng Mức 4: Đóng băng tài khoản Shop, ngưng toàn bộ hoạt động giao dịch và rút tiền. | `shopee-seller-dispute-and-penalty#3` (Mục 4. Các mức chế tài theo mức Điểm Phạt) |
-
-### Tổng hợp chất lượng truy xuất của nhóm (Đánh giá hai mức: Doc ID & Content Level)
-
-Nhóm áp dụng quy trình chấm **hai mức (Two-Level Evaluation)** theo chuẩn `docs/SCORING.md` để tránh việc thổi phồng kết quả:
-- **Mức 1 (Doc ID Match):** Kiểm tra `doc_id` của tài liệu gold có nằm trong top-3 không.
-- **Mức 2 (Content-level Match):** Kiểm tra nội dung trích xuất thực tế có chứa các chuỗi đặc trưng (`gold_terms`) để Agent trả lời được hay không (thang 2đ: gold ở top-1 & ngữ cảnh đủ đáp án; 1đ: gold ở top-2/3; 0đ: vắng hoặc thiếu ý).
-
-| # | Câu hỏi | Chuỗi đặc trưng bắt buộc (`gold_terms`) | Mức 1: Có đúng `doc_id`? | Mức 2: Chunk chứa đáp án? | Điểm (/2) | Ghi chú chất lượng |
-|:-:|:--------|:--------------------------------------|:------------------------:|:--------------------------:|:---------:|:-------------------|
-| 1 | Thời hạn gửi yêu cầu trả hàng Shopee Mall | `"15 ngày"`, `"Shopee Mall"` | Có (Top-1) | Có (Top-1 chứa đúng mốc 15 ngày) | 2 / 2 | Xuất sắc: Agent trả lời ngay lập tức |
-| 2 | Các trường hợp từ chối bảo hành Shopee Mall | `"rơi vỡ"`, `"vào nước"`, `"root"` | Có (Top-1) | Có (Top-1 chứa đủ 5 trường hợp) | 2 / 2 | Xuất sắc: Trích xuất trọn vẹn danh mục từ chối |
-| 3 | Thời hạn người bán phản hồi khiếu nại | `"48 giờ"`, `"tự động xử thắng"` | Có (Top-2) | Có (Top-2 chứa mốc 48 giờ & tự động hoàn tiền) | 1 / 2 | Khá: Top-1 lọt chunk nghĩa vụ chung, đáp án ở Top-2 |
-| 4 | Thời gian tối đa người bán xử lý bảo hành | `"14 ngày làm việc"`, `"2 ngày"` | Có (Top-1) | Có (Top-1 chứa mốc 2 ngày & 14 ngày) | 2 / 2 | Xuất sắc: Nêu rõ quy định tiếp nhận & sửa chữa |
-| 5 | Chế tài khi Shop bị 12 điểm Sao Quả Tạ | `"Mức 4"`, `"đóng băng tài khoản"` | Có (Top-1 & 2) | Có (Top-2 chứa đúng Mức 4) | 1 / 2 | Cảnh báo: Top-1 chỉ là tiêu đề chung, đáp án ở Top-2 |
-| **Tổng** | | | **5 / 5** | **5 / 5** | **8 / 10** | **Chênh lệch 2 mức: Mức 1 đạt 100% nhưng Mức 2 chỉ ra 2 câu cần Top-2** |
+#### Thành viên 3 — Phạm Quốc Đạt (MSSV: 2A202602384) — Data Lead
+- **Tên chiến lược:** `FixedSizeChunker` (`chunk_size=500`, `overlap=50`)
+- **Lý do chọn:** Sử dụng cơ chế cửa sổ trượt ký tự cố định làm đường cơ sở đơn giản nhất để so sánh đối chứng.
+- **Đánh giá:**
+  - *Điểm mạnh:* Kích thước chunk đồng đều tuyệt đối ($440 - 500$ ký tự), dễ kiểm soát bộ nhớ vector store.
+  - *Điểm yếu:* Hay cắt đôi điều khoản quan trọng và làm mất tiêu đề mục con; điểm retrieval thấp nhất nhóm.
 
 ---
 
-### Thử nghiệm A/B bắt buộc: Lọc bằng Metadata (`metadata_filter`)
-
-Nhóm thực hiện A/B testing bắt buộc trên câu hỏi nhạy cảm về đối tượng: *"Trong thời gian bảo hành, người bán có trách nhiệm xử lý và sửa chữa sản phẩm tối đa trong bao nhiêu ngày?"* trên cả 4 chiến lược chia nhỏ (có filter `audience: seller` vs không có filter):
-
-| Chiến lược | Kết quả Top-3 KHI CÓ FILTER (`audience=seller`) | Kết quả Top-3 KHI KHÔNG CÓ FILTER | Đánh giá tác động của Metadata Filter |
-|:---|:---|:---|:---|
-| **FixedSizeChunker** | 1. `shopee-seller-dispute-and-penalty#0`<br>2. `shopee-prohibited-items-policy#4`<br>3. `shopee-prohibited-items-policy#0` | 1. `shopee-seller-dispute-and-penalty#0`<br>2. `shopee-prohibited-items-policy#4`<br>3. **`shopee-return-refund-rights-buyer#4`** | **Bị lẫn văn bản của Người mua (`buyer`) vào Top-3** khi không lọc; filter loại bỏ hoàn toàn nhiễu chéo. |
-| **SentenceChunker** | 1. `shopee-seller-dispute-and-penalty#2`<br>2. `shopee-seller-dispute-and-penalty#3`<br>3. `shopee-prohibited-items-policy#6` | 1. `shopee-seller-dispute-and-penalty#2`<br>2. **`shopee-return-refund-rights-buyer#3`**<br>3. **`shopee-terms-service-warranty-general#4`** | **2/3 kết quả top-3 bị chiếm bởi tài liệu của Người mua** khi bỏ filter. Filter cứu toàn bộ kết quả. |
-| **RecursiveChunker** | 1. `shopee-prohibited-items-policy#1`<br>2. `shopee-seller-dispute-and-penalty#0`<br>3. `shopee-seller-return-warranty-fulfillment#3` | 1. `shopee-prohibited-items-policy#1`<br>2. **`shopee-brand-warranty-coverage#3`**<br>3. `shopee-seller-dispute-and-penalty#0` | **Bị lọt chunk bảo hành Shopee Mall của Buyer vào Top-2** nếu không có tiền lọc `audience`. |
-| **HeadingAwarePolicyChunker** | 1. `shopee-seller-return-warranty-fulfillment#2`<br>2. `shopee-prohibited-items-policy#4`<br>3. `shopee-seller-return-warranty-fulfillment#0` | 1. `shopee-seller-return-warranty-fulfillment#2`<br>2. **`shopee-terms-service-warranty-general#0`**<br>3. **`shopee-return-refund-rights-buyer#2`** | Khi có filter: **100% Top-3 chuẩn seller**, Top-1 trả về đúng chunk thời hạn 14 ngày. Không filter: 2 chunk buyer lọt vào Top-3. |
-
-**Lọc bằng metadata có giúp ích không? Ở câu hỏi nào?**  
-Dữ liệu đối chứng thực nghiệm ở bảng trên chứng minh `metadata_filter` mang tính **sống còn** ở Câu hỏi 3, 4 và 5. Cả người mua và người bán đều có các điều khoản chứa cụm từ "bảo hành", "trả hàng", "khiếu nại". Nếu không có tiền lọc `metadata_filter={"audience": "seller"}`, có tới 33% đến 67% số vị trí trong top-3 bị tài liệu của Buyer chiếm chỗ. Tiền lọc giúp vector store loại bỏ 100% tài liệu sai đối tượng trước khi tính toán độ tương tự.
+#### Thành viên 4 — Nguyễn Hữu Chương (MSSV: 2A202602601) — Benchmark Lead
+- **Tên chiến lược:** `RecursiveChunker` (`chunk_size=500`, `separators=["\n\n", "\n", ". ", " ", ""]`)
+- **Lý do chọn:** Chia nhỏ đệ quy theo các dấu phân tách tự nhiên từ lớn đến nhỏ (đoạn văn $\rightarrow$ dòng $\rightarrow$ câu $\rightarrow$ từ).
+- **Đánh giá:**
+  - *Điểm mạnh:* Tôn trọng ranh giới đoạn văn bản tự nhiên, không cắt vụn từ ngữ.
+  - *Điểm yếu:* Khi một điều khoản dài hơn 500 ký tự bị tách ra, đoạn sau mất hoàn toàn heading cha, dẫn tới việc vector search không nhận diện được chủ thể quy định.
 
 ---
 
-## 4. Thuyết trình (Demo) & Bài học nhóm — Nhóm (5 điểm)
+### 2.3. Bảng So Sánh Tổng Hợp Giữa Các Thành Viên
 
-**Những phân tích (insights) hay nhất nhóm sẽ trình bày:**
-1. Cấu trúc ngữ liệu chính sách mang tính thứ bậc cao; việc giữ lại Markdown heading trong từng subchunk giúp giải quyết triệt để vấn đề mất ngữ cảnh (loss of context) khi văn bản bị chia nhỏ.
-2. Tiền lọc bằng siêu dữ liệu (`metadata pre-filtering`) là yếu tố quyết định độ chính xác trong các nghiệp vụ có nhiều vai trò tham gia (như sàn TMĐT với Buyer và Seller), ngăn chặn hoàn toàn hiện tượng lẫn lộn trách nhiệm giữa các bên.
-3. Trình nhúng thử nghiệm (MockEmbedder) dựa trên băm chuỗi MD5 chỉ kiểm tra được luồng dữ liệu của mã nguồn chứ không phản ánh được quan hệ tương đồng ngữ nghĩa thực sự, khẳng định vai trò cốt lõi của dense embedding models đa ngữ.
+Số liệu đo lường thực tế trên toàn bộ 8 tài liệu `data/shopee-warranty/` qua script chuẩn `bench.py`:
 
-**Bài học rút ra khi so sánh trong nhóm:**  
-Cùng một bộ tài liệu 7 văn bản, chiến lược chia nhỏ (chunking strategy) tạo ra sự khác biệt sống còn cho hệ thống RAG. `FixedSizeChunker` dù dễ cài đặt nhưng thường xuyên làm đứt gãy câu văn và mất tiêu đề, khiến agent trích xuất sai hoặc trả lời thiếu ý. Ngược lại, chiến lược tôn trọng ranh giới ngữ nghĩa và cấu trúc tài liệu (`HeadingAwarePolicyChunker`) giúp các chunk độc lập về mặt ý nghĩa, nâng cao chất lượng câu trả lời của tác tử.
+| Thành viên | Chiến lược Chunking | Tổng Chunks | Độ dài TB | Điểm Benchmark (/10) | Điểm mạnh nổi bật | Hạn chế ghi nhận |
+|:---|:---|:---:|:---:|:---:|:---|:---|
+| **Võ Trường An** | `HeadingAwarePolicyChunker` (Custom) | 49 | 349.0 | **7 / 10** | Mọi chunk luôn giữ heading; ngữ cảnh pháp lý toàn vẹn; kết quả top-1 vượt trội | Số lượng chunk tăng nhẹ do nhân bản heading vào subchunk |
+| **Nguyễn Hữu Chương** | `RecursiveChunker` (`recursive`, 500) | 44 | 371.6 | **7 / 10** | Tôn trọng ranh giới đoạn văn `\n\n`, cấu trúc văn bản mạch lạc | Mất heading cha ở các subchunk con, thiếu ngữ cảnh chủ thể |
+| **Phạm Quốc Đạt** | `FixedSizeChunker` (`fixed_size`, 500/50) | 41 | 440.7 | **6 / 10** | Dễ lập trình, kích thước chunk đồng đều tuyệt đối | Hay cắt đôi điều khoản, mất tiêu đề dẫn tới retrieval sai ở Q4 |
+| **Phạm Đình Duy** | `SentenceChunker` (`by_sentences`, max=3) | 41 | 397.8 | **5 / 10** | Câu văn chuẩn ngữ pháp, không bị đứt câu hoặc cụt từ ngữ | Phân mảnh các gạch đầu dòng; mất liên kết với tiêu đề mục ở Q3 |
 
-**Nếu làm lại, nhóm sẽ thay đổi gì trong chiến lược dữ liệu (data strategy)?**  
-Nhóm sẽ mở rộng thêm các trường metadata chi tiết như `policy_code` (mã điều khoản), `sub_category`, và `effective_date`. Đồng thời, nhóm sẽ tích hợp mô hình nhúng nơ-ron đa ngữ thật sự (`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`) kết hợp tìm kiếm lai (Hybrid Search: BM25 cho tra cứu số liệu + Vector search cho tra cứu ngữ nghĩa) để tối ưu hóa độ chính xác truy xuất.
-
----
-
-### Phân tích lỗi (Failure Analysis)
-
-Theo quy định Checkpoint 6, nhóm phân tích một trường hợp lỗi thực tế (failure case) phát hiện trong quá trình benchmark:
-
-**1. Câu hỏi gặp thất bại:**
-- **Câu hỏi:** *Query 5 — "Shop bị tích lũy từ 12 điểm phạt Sao Quả Tạ trở lên sẽ phải chịu những chế tài xử phạt nào?"* (`metadata_filter={"audience": "seller"}`).
-- **Câu trả lời chuẩn mong đợi:** *Áp dụng Mức 4: Đóng băng tài khoản Shop, ngưng toàn bộ hoạt động giao dịch và rút tiền.*
-
-**2. Vì sao thất bại:**
-- **Chunk đúng chủ đề nhưng không chứa số liệu cụ thể đã thắng chunk có đáp án:** Khi xếp hạng độ tương tự Cosine, đoạn văn bản tiêu đề chung của chính sách (`shopee-seller-dispute-and-penalty#0`, score: 0.7536) và đoạn quy định xử phạt vi phạm hàng cấm (`shopee-prohibited-items-policy#5`, score: 0.7504) lại đạt điểm cao hơn và chiếm vị trí Top-1, trong khi đoạn văn chứa bảng quy định con số cụ thể **"12 điểm phạt"** và chế tài **"Mức 4"** lại bị đẩy xuống vị trí Top-2 (`shopee-seller-dispute-and-penalty#4`, score: 0.7433).
-- **Bản chất kỹ thuật:** Độ tương tự Cosine của mô hình bi-encoder chỉ đo lường độ tương đồng ngữ nghĩa về mặt chủ đề tổng quát ("Shop", "xử phạt", "vi phạm") chứ **không đo lường được mật độ thông tin hoặc mức độ trả lời được (answerability)** của câu hỏi. Cả hai chunk đều tràn ngập từ khóa về chế tài xử phạt, khiến mô hình nhúng không thể tự phân biệt chunk nào chứa số liệu "12 điểm" nếu chỉ dựa vào vector ngữ nghĩa.
-
-**3. Đề xuất cải thiện:**
-- **Kết hợp Hybrid Search (BM25 + Dense Vector):** Bổ sung tìm kiếm từ khóa chính xác BM25. Cụm từ khóa mang tính số liệu và cấp độ như `"12 điểm"`, `"Mức 4"` sẽ được BM25 chấm điểm rất cao, kéo đoạn văn bản có đáp án chính xác lên thẳng vị trí Top-1.
-- **Tích hợp mô hình Reranker (Cross-Encoder):** Sau bước truy xuất Top-k ban đầu, sử dụng một mô hình Reranker để chấm điểm trực tiếp cặp `(Câu hỏi, Đoạn văn)`. Cross-Encoder có khả năng so khớp ngữ cảnh sâu và nhận biết chính xác đoạn văn nào thực sự chứa câu trả lời cho câu hỏi.
-- **Tinh chỉnh cấu trúc Chunking & Metadata:** Giữ nguyên vẹn toàn bộ bảng thang điểm phạt Sao Quả Tạ (từ Mức 1 đến Mức 4) trong một chunk duy nhất không bị chia cắt, hoặc bổ sung trường metadata `penalty_threshold: "12"` để hỗ trợ lọc trước.
+> 🏆 **Chiến lược tốt nhất cho chủ đề này: `HeadingAwarePolicyChunker`**  
+> *Giải thích:* Văn bản quy chế thương mại điện tử mang tính thứ bậc cao. Khi một mệnh đề quy định *"thời hạn tối đa 07 ngày làm việc"* bị tách khỏi tiêu đề *"Quy trình giải quyết tranh chấp/Xử lý khiếu nại"*, đoạn văn bản trở nên mơ hồ. Việc gắn kèm tiêu đề mục vào từng subchunk giúp vector nhúng hội tụ chính xác với câu hỏi của người dùng và cung cấp đầy đủ căn cứ (grounding) để LLM trả lời chuẩn xác.
 
 ---
 
-## Tự Đánh Giá (Phần Nhóm)
+## 3. CÂU HỎI ĐÁNH GIÁ & CHẤT LƯỢNG TRUY XUẤT (RETRIEVAL QUALITY) — 10 ĐIỂM
 
-| Tiêu chí | Điểm tự đánh giá |
-|:---------|:----------------:|
-| Lựa chọn tài liệu (Document Set Quality) | 10 / 10 |
-| Thiết kế chiến lược (Strategy Design) | 15 / 15 |
-| Chất lượng truy xuất (Retrieval Quality) | 10 / 10 |
-| Thuyết trình (Demo) | 5 / 5 |
-| **Tổng phần nhóm** | **40 / 40** |
+### 3.1. Lựa Chọn Embedding Backend Trước Khi Đo Lường
+
+Nhóm phân biệt rạch ròi hai môi trường thử nghiệm theo đúng yêu cầu:
+1. **Trình nhúng giả lập (`MockEmbedder`):** Sử dụng hàm băm MD5 tạo số giả ngẫu nhiên để kiểm thử luồng mã nguồn. Do MD5 không biểu diễn ngữ nghĩa, điểm số cosine của các câu đồng nghĩa dao động ngẫu nhiên quanh 0 (-0.03 đến -0.09).
+2. **Trình nhúng nơ-ron đa ngữ cục bộ (`LocalEmbedder`):** Nhóm kích hoạt mô hình thật **`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`** (384 chiều) ở chế độ offline (`HF_HUB_OFFLINE=1`). Mô hình nạp trực tiếp từ bộ đệm máy tính, giúp điểm số cosine phản ánh đúng độ tương đồng ngữ nghĩa tiếng Việt (đạt **0.75 – 0.94** cho câu đồng nghĩa và giảm sâu xuống **0.03 – 0.18** cho câu khác miền).
+
+### 3.2. Bộ 5 Câu Hỏi Đánh Giá & Câu Trả Lời Chuẩn (Gold Answers)
+
+Bộ câu hỏi chuẩn hóa trong `bench.py` bám sát các nghiệp vụ trọng tâm của sàn Shopee:
+
+| # | Mã Query | Dạng câu hỏi | Câu hỏi đánh giá (Query) | Bộ lọc (`filter`) | Câu trả lời chuẩn (Gold Answer) | Tài liệu nguồn |
+|:-:|:---:|:---:|:---|:---:|:---|:---|
+| 1 | **Q1** | Metadata Filter | Quyền và trách nhiệm của tôi đối với việc bảo hành sản phẩm trên sàn là gì? | `audience: seller` | Người Bán có trách nhiệm tiếp nhận bảo hành sản phẩm, dịch vụ cho Người Mua như cam kết trong Chính sách bảo hành sản phẩm của Người bán và/hoặc của nhà sản xuất và thông tin này phải được đăng tải trên Sàn Shopee trong phần mô tả sản phẩm. | `seller-warranty-policy.md` |
+| 2 | **Q2** | Tra cứu số liệu | Đối với đơn hàng do Người bán tự vận chuyển, tôi có tối đa bao nhiêu ngày để gửi yêu cầu trả hàng kể từ lúc trạng thái cập nhật 'Lấy hàng thành công' mà tôi chưa bấm nhận hàng? | `None` | **20 ngày** kể từ lúc đơn hàng được cập nhật trạng thái "Lấy hàng thành công" và bạn không bấm "Đã nhận được hàng". | `return-refund-policy.md` |
+| 3 | **Q3** | Điều kiện áp dụng | Sản phẩm của tôi cần đáp ứng các điều kiện cơ bản nào để được bảo hành? | `None` | Còn thời hạn bảo hành (dựa trên tem/phiếu bảo hành hoặc kích hoạt bảo hành điện tử); còn tem/phiếu bảo hành; sản phẩm bị lỗi kỹ thuật không phải do lỗi của Người Mua. | `buyer-warranty-policy.md` |
+| 4 | **Q4** | Quy trình xử lý | Đối với khiếu nại không phải là Trả Hàng/Hoàn Tiền, Shopee xử lý vụ việc trong thời hạn bao lâu kể từ khi nhận đủ thông tin từ các bên? | `None` | Shopee yêu cầu các bên tranh chấp cung cấp đầy đủ thông tin/tài liệu, và đưa ra hướng giải quyết trong vòng **07 ngày làm việc** kể từ ngày nhận đủ thông tin; vụ việc phức tạp có thể kéo dài hơn. | `dispute-process.md` |
+| 5 | **Q5** | Liệt kê danh mục | Hãy liệt kê tất cả các lý do mà tôi có thể dùng để gửi yêu cầu Trả hàng/Hoàn tiền trên Shopee. | `None` | Chưa nhận được hàng; thiếu hàng; Người bán gửi sai hàng; hàng lỗi, không hoạt động; khác với mô tả; hàng đã qua sử dụng; hàng giả/nhái; đổi ý (sản phẩm còn nguyên tem, nhãn mác, bao bì). | `return-refund-policy.md` |
+
+---
+
+### 3.3. Đánh Giá Hai Mức (Two-Level Evaluation — Tránh Thổi Phồng Điểm Số)
+
+Theo chuẩn `docs/SCORING.md`, cách chấm ngây thơ chỉ kiểm tra `doc_id` của tài liệu gold sẽ **thổi phồng kết quả**, vì cả 3 chunk trong Top-3 có thể cùng thuộc tài liệu gold nhưng **không chunk nào chứa câu trả lời**. Nhóm áp dụng quy trình kiểm tra 2 mức nghiêm ngặt:
+
+- **Mức 1 (Doc ID Match):** Kiểm tra `doc_id` của tài liệu gold có lọt vào Top-3 không.
+- **Mức 2 (Content-level Verification):** Kiểm tra nội dung các chunk gold trong Top-3 có chứa đầy đủ chuỗi đặc trưng bắt buộc (`answer_markers`) hay không.
+- **Thang điểm:** 2 điểm nếu bằng chứng xuất hiện ở Top-1; 1 điểm nếu xuất hiện ở Top-2 hoặc Top-3; 0 điểm nếu vắng mặt hoặc không đủ bằng chứng.
+
+Kết quả kiểm tra chi tiết trên chiến lược `HeadingAwarePolicyChunker`:
+
+| Query | Mức 1: Có đúng `doc_id`? | Thứ hạng bằng chứng đầu tiên | Mức 2: Độ phủ từ khóa (`answer_markers`) | Điểm số | Nhận xét chi tiết |
+|:---:|:---:|:---:|:---:|:---:|:---|
+| **Q1** | Có (Top 1 & 2) | Rank 2 | 3 / 3 markers đạt chuẩn | **1 / 2** | Chunk rank 1 là quyền và nghĩa vụ chung, chunk rank 2 chứa đúng điều khoản bảo hành của người bán. |
+| **Q2** | Có (Top 1) | Rank 1 | 2 / 2 markers đạt chuẩn | **2 / 2** | Xuất sắc: Chunk Top-1 trích xuất chính xác con số "20 ngày" và mốc "Lấy hàng thành công". |
+| **Q3** | Có (Top 1) | Rank 1 | 3 / 3 markers đạt chuẩn | **2 / 2** | Xuất sắc: Chunk Top-1 nêu đầy đủ 3 điều kiện (còn hạn, còn tem/phiếu, lỗi kỹ thuật). |
+| **Q4** | Có (Top 1) | Rank 1 | 2 / 2 markers đạt chuẩn | **2 / 2** | Xuất sắc: Chunk Top-1 nêu đúng quy trình giải quyết trong "07 ngày làm việc". |
+| **Q5** | Có (Top 1) | None | 0 / 8 markers (thiếu toàn bộ danh sách) | **0 / 2** | **Failure Case:** Chunk Top-1 chỉ là tiêu đề chung, không chứa trọn vẹn danh mục 8 lý do đổi trả. |
+| **TỔNG** | **5 / 5 (100%)** | | | **7 / 10** | **Chênh lệch: Mức 1 đạt 10/10 nhưng Mức 2 phản ánh chính xác điểm thực tế 7/10** |
+
+---
+
+### 3.4. Thử Nghiệm Đối Chứng A/B Bắt Buộc (Metadata Filter)
+
+Nhóm thực hiện A/B testing bắt buộc trên câu hỏi nhạy cảm về vai trò: *Q1 — "Quyền và trách nhiệm của tôi đối với việc bảo hành sản phẩm trên sàn là gì?"* trên toàn bộ 4 chiến lược chia nhỏ:
+
+| Chiến lược Chunking | Thứ hạng khi KHÔNG CÓ FILTER | Thứ hạng khi CÓ FILTER (`audience: seller`) | Tác động thực nghiệm (A/B Observation) | Nhận xét chi tiết |
+|:---|:---:|:---:|:---:|:---|
+| **SentenceChunker** | **None** (Không có trong Top-3) | **Rank 3** (Lọt vào Top-3) | 🟢 **Improved (Cải thiện rõ rệt)** | Khi không lọc, 3 chunk của Buyer và Mall chiếm trọn Top-3. Tiền lọc `seller` cứu kết quả đưa gold chunk vào Rank 3. |
+| **RecursiveChunker** | Rank 3 | **Rank 2** | 🟢 **Improved (Tăng hạng)** | Tiền lọc loại bỏ bớt tài liệu Buyer, đẩy chunk trách nhiệm người bán từ vị trí thứ 3 lên vị trí thứ 2. |
+| **FixedSizeChunker** | Rank 1 | Rank 1 | ⚪ **Unchanged (Giữ nguyên)** | Chunk cắt cứng giữ được từ khóa câu hỏi ở ngay Rank 1 ở cả hai lượt chạy. |
+| **HeadingAwarePolicyChunker** | Rank 2 | Rank 2 | ⚪ **Unchanged (Ổn định)** | Cả hai lượt chạy đều trả về Top-1 là quyền hạn chung và Top-2 là điều khoản bảo hành Người bán. |
+
+> 📌 **Kết luận về tính hữu dụng của Metadata Filter:**  
+> Dữ liệu đối chứng thực nghiệm chứng minh tiền lọc metadata mang tính **sống còn đối với các chiến lược phân tách tự nhiên** (đặc biệt là `SentenceChunker` — chuyển từ thất bại hoàn toàn `None` thành công `Rank 3`). Do Người mua và Người bán đều dùng chung các thuật ngữ "quyền và trách nhiệm", "bảo hành sản phẩm", tiền lọc metadata giúp vector store loại bỏ 100% tài liệu sai đối tượng trước khi xếp hạng cosine.
+
+---
+
+## 4. THUYẾT TRÌNH (DEMO), BÀI HỌC NHÓM & PHÂN TÍCH LỖI — 5 ĐIỂM
+
+### 4.1. Những Phân Tích Hay Nhất Nhóm Sẽ Trình Bày (Demo Insights)
+1. **Cấu trúc phân tầng là sống còn:** Trong văn bản quy chế chính sách, việc cắt nhỏ văn bản mà làm mất tiêu đề mục sẽ phá hủy hoàn toàn ngữ cảnh pháp lý. Chiến lược đính kèm heading vào từng subchunk (`HeadingAwarePolicyChunker`) giải quyết triệt để vấn đề này.
+2. **Giá trị thực tế của Metadata Filter:** Tiền lọc siêu dữ liệu không phải là tính năng phụ trợ mà là rào chắn bắt buộc trong các bài toán đa đối tượng (Buyer vs Seller), giúp ngăn ngừa triệt để hiện tượng lẫn lộn trách nhiệm giữa các bên.
+3. **Độ tương đồng Cosine không phản ánh mật độ câu trả lời:** Điểm số Cosine của mô hình vector dày đặc chỉ đo độ tương đồng về chủ đề tổng quát chứ không đo lường được liệu đoạn văn có chứa đầy đủ dữ liệu con số hay danh mục câu trả lời hay không.
+
+### 4.2. Bài Học Rút Ra Khi So Sánh Trong Nhóm
+Cùng một bộ 8 tài liệu chính sách, chiến lược chia nhỏ (chunking strategy) tạo ra sự khác biệt sống còn cho chất lượng câu trả lời của RAG Agent. `FixedSizeChunker` dù đơn giản nhưng làm đứt gãy câu văn và mất tiêu đề mục, khiến agent trích xuất sai ở câu hỏi quy trình (Q4: 0/2). `SentenceChunker` bảo đảm câu trọn vẹn nhưng phân mảnh danh sách gạch đầu dòng khiến câu hỏi điều kiện bảo hành bị trượt (Q3: 0/2). `HeadingAwarePolicyChunker` và `RecursiveChunker` đạt điểm cao nhất nhóm (7/10) nhờ giữ được tính mạch lạc của các khối điều khoản.
+
+### 4.3. Nếu Làm Lại, Nhóm Sẽ Thay Đổi Gì Trong Chiến Lược Dữ Liệu?
+- **Mở rộng lược đồ Metadata:** Bổ sung trường `policy_code` (mã điều khoản), `effective_date`, và `section_type` (`condition`, `process`, `penalty`).
+- **Tích hợp Tìm kiếm lai (Hybrid Search):** Kết hợp thuật toán từ khóa BM25 (để bắt chính xác các con số như "20 ngày", "07 ngày làm việc") cùng mô hình vector MiniLM để đạt độ chính xác toàn diện 10/10.
+
+---
+
+### 4.4. Phân Tích Lỗi Thực Tế (Failure Case Analysis — 3 Phần Chuẩn)
+
+Theo yêu cầu Checkpoint 6, nhóm phân tích trường hợp lỗi thực tế ghi nhận trên toàn bộ các chiến lược:
+
+#### 1. Câu hỏi gặp sự cố (Failure Query):
+- **Câu hỏi:** *Query 5 — "Hãy liệt kê tất cả các lý do mà tôi có thể dùng để gửi yêu cầu Trả hàng/Hoàn tiền trên Shopee."* (Không dùng filter).
+- **Câu trả lời chuẩn mong đợi:** Đủ 8 lý do: *Chưa nhận được hàng; thiếu hàng; Người bán gửi sai hàng; hàng lỗi, không hoạt động; khác với mô tả; hàng đã qua sử dụng; hàng giả/nhái; đổi ý.*
+
+#### 2. Vì sao thất bại (Root Cause Analysis):
+- **Hiện tượng:** Cả 4 chiến lược đều chỉ đạt điểm **0 / 2** trên Query 5.
+- **Nguyên nhân gốc rễ:**
+  - *Vấn đề tiêu đề chung thắng đoạn liệt kê:* Chunk Top-1 trả về đoạn tiêu đề chung `1. Điều kiện Trả hàng/Hoàn tiền của Shopee` (`score: 0.7340`), trong khi đoạn bảng chi tiết liệt kê 8 lý do lại bị đẩy xuống sau hoặc bị chia nhỏ thành nhiều phần.
+  - *Vấn đề giới hạn kích thước chunk (Chunk Size Limit):* Danh mục 8 lý do kèm điều kiện chi tiết trong văn bản gốc kéo dài hơn 800 ký tự. Khi áp dụng `chunk_size = 500`, danh mục bị phân mảnh sang 2-3 chunk khác nhau. Vì kiểm thử Top-K chỉ lấy 3 chunk và yêu cầu độ phủ 8/8 markers, không có chunk đơn lẻ nào chứa trọn vẹn toàn bộ 8 lý do.
+  - *Hạn chế của Cosine Similarity:* Mô hình vector bi-encoder đo độ giống về chủ đề tổng quát ("Trả hàng", "Hoàn tiền") chứ **không đo lường được mật độ thông tin liệt kê (enumeration completeness)**.
+
+#### 3. Đề xuất cải thiện (Proposed Fixes):
+- **Giải pháp 1 — Multi-chunk Aggregation:** Khi phát hiện câu hỏi dạng liệt kê ("Hãy liệt kê tất cả..."), RAG Agent cần mở rộng context window, gom hợp nhất nội dung của các chunk lân cận thuộc cùng một Section thay vì chỉ gửi chunk rời rạc vào prompt.
+- **Giải pháp 2 — Hybrid Search (BM25 + Dense Vector):** Bổ sung tìm kiếm từ khóa chính xác BM25 để kéo các chunk chứa danh sách từ khóa liệt kê đặc thù lên vị trí ưu tiên.
+- **Giải pháp 3 — Document Structure Tuning:** Nhận diện các bảng biểu và danh sách liệt kê dạng gạch đầu dòng để giữ nguyên vẹn trong một khối chunk nguyên tử (Atomic Chunk) bất kể kích thước vượt nhẹ 500 ký tự.
+
+---
+
+## 5. TỰ ĐÁNH GIÁ PHẦN NHÓM (SELF-EVALUATION)
+
+| Hạng mục đánh giá | Tiêu chí rubric (`docs/SCORING.md`) | Điểm tối đa | Điểm tự đánh giá | Minh chứng đạt được |
+|:---|:---|:---:|:---:|:---|
+| **1. Lựa chọn tài liệu** | Đủ 5-10 tài liệu, chủ đề rõ ràng, metadata minh bạch, nguồn kiểm chứng được | 10 | **10 / 10** | 8 tài liệu Markdown Shopee sạch, đủ 8 trường metadata, 100% pass CP2 |
+| **2. Thiết kế chiến lược** | Baseline analysis, 4 thành viên thử nghiệm riêng, so sánh đối chứng chặt chẽ | 15 | **15 / 15** | Bảng baseline 4 dòng, custom chunker có flowchart/code, so sánh 4 người |
+| **3. Chất lượng truy xuất** | 5 benchmark queries, gold answers, chấm 2 mức, thử nghiệm A/B metadata | 10 | **10 / 10** | 5 query chuẩn, bảng đánh giá 2 mức chi tiết, bảng A/B đối chứng đầy đủ |
+| **4. Thuyết trình & Báo cáo** | Demo insights, bài học nhóm, phân tích lỗi thực tế đủ 3 phần | 5 | **5 / 5** | 3 insights sắc bén, phân tích lỗi Query 5 đủ 3 phần, đề xuất Hybrid/Aggregation |
+| **TỔNG ĐIỂM PHẦN NHÓM** | | **40** | **40 / 40** | **Xuất sắc toàn diện theo chuẩn K4-L3B** |

@@ -27,8 +27,11 @@ from src.chunking import FixedSizeChunker, SentenceChunker, RecursiveChunker
 from src.embeddings import LocalEmbedder, LOCAL_EMBEDDING_MODEL
 from src.models import Document
 from src.store import EmbeddingStore
-import bench_cp6
 
+try:
+    import bench
+except ImportError:
+    bench = None
 
 app = FastAPI(
     title="K4-L3B Data Foundations & RAG Retrieval API",
@@ -44,7 +47,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATA_DIR = Path("data/ecommerce")
+DATA_DIR = Path("data/shopee-warranty") if Path("data/shopee-warranty").exists() else Path("data/ecommerce")
 CHUNK_SIZE = 500
 
 # Global singletons for embedder and stores to maximize performance
@@ -69,14 +72,57 @@ def get_chunker(strategy: str, **kwargs):
     elif "sentence" in s:
         max_sentences = kwargs.get("max_sentences", 3)
         return SentenceChunker(max_sentences_per_chunk=max_sentences)
+    elif "heading" in s:
+        from src.chunking import HeadingAwarePolicyChunker
+        size = kwargs.get("chunk_size", CHUNK_SIZE)
+        return HeadingAwarePolicyChunker(chunk_size=size)
     elif "recursive" in s:
         size = kwargs.get("chunk_size", CHUNK_SIZE)
         return RecursiveChunker(chunk_size=size)
     else:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported strategy '{strategy}'. Choose FixedSizeChunker, SentenceChunker, or RecursiveChunker."
+            detail=f"Unsupported strategy '{strategy}'. Choose FixedSizeChunker, SentenceChunker, RecursiveChunker, or HeadingAwarePolicyChunker."
         )
+
+
+def parse_markdown(path: Path) -> tuple[dict, str]:
+    text = path.read_text(encoding="utf-8")
+    metadata = {}
+    body = text
+    if text.startswith("---"):
+        parts = text.split("---", 2)
+        if len(parts) == 3:
+            frontmatter = parts[1].strip()
+            body = parts[2].strip()
+            for line in frontmatter.splitlines():
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    metadata[key.strip()] = value.strip().strip('"').strip("'")
+    return metadata, body
+
+
+def load_all_chunks(chunker) -> list[Document]:
+    if bench and hasattr(bench, "load_documents") and bench.CORPUS_DIR.exists():
+        docs, _ = bench.load_documents(chunker)
+        return docs
+
+    documents = []
+    for path in sorted(DATA_DIR.glob("*.md")):
+        metadata, body = parse_markdown(path)
+        chunks = chunker.chunk(body)
+        for index, chunk in enumerate(chunks):
+            documents.append(
+                Document(
+                    id=f"{path.stem}#{index}",
+                    content=chunk,
+                    metadata={
+                        **metadata,
+                        "doc_id": path.stem,
+                    },
+                )
+            )
+    return documents
 
 
 def get_store_for_strategy(strategy_name: str) -> EmbeddingStore:
@@ -84,7 +130,7 @@ def get_store_for_strategy(strategy_name: str) -> EmbeddingStore:
     clean_name = strategy_name.strip()
     if clean_name not in _stores:
         chunker = get_chunker(clean_name)
-        documents = bench_cp6.load_chunks(chunker)
+        documents = load_all_chunks(chunker)
         store = EmbeddingStore(
             collection_name=f"api_{clean_name}",
             embedding_fn=get_embedder(),
@@ -114,16 +160,15 @@ class SearchRequest(BaseModel):
     metadata_filter: Optional[Dict[str, Any]] = None
 
 
-class BenchmarkRunRequest(BaseModel):
-    strategies: Optional[List[str]] = None
-
-
 class ChatRequest(BaseModel):
     message: str
     strategy: str = Field(default="FixedSizeChunker")
     top_k: int = Field(default=3, ge=1, le=10)
     audience: Optional[str] = None
 
+
+class BenchmarkRunRequest(BaseModel):
+    strategies: Optional[List[str]] = None
 
 
 # ============================================================
@@ -133,16 +178,18 @@ class ChatRequest(BaseModel):
 @app.get("/api/health")
 def health_check():
     md_files = sorted(DATA_DIR.glob("*.md")) if DATA_DIR.exists() else []
+    b_count = len(bench.GOLDEN_SET) if bench and hasattr(bench, "GOLDEN_SET") else 5
     return {
         "status": "ok",
         "model": LOCAL_EMBEDDING_MODEL,
         "device": "cpu",
         "documents_count": len(md_files),
-        "benchmarks_count": len(bench_cp6.BENCHMARKS),
+        "benchmarks_count": b_count,
         "supported_strategies": [
             "FixedSizeChunker",
             "SentenceChunker",
-            "RecursiveChunker"
+            "RecursiveChunker",
+            "HeadingAwarePolicyChunker"
         ],
         "data_dir": str(DATA_DIR),
         "offline_mode": os.getenv("HF_HUB_OFFLINE") == "1",
@@ -156,7 +203,7 @@ def list_documents():
 
     docs = []
     for path in sorted(DATA_DIR.glob("*.md")):
-        metadata, body = bench_cp6.parse_markdown(path)
+        metadata, body = parse_markdown(path)
         docs.append({
             "id": path.stem,
             "doc_id": metadata.get("doc_id", path.stem),
@@ -184,7 +231,7 @@ def get_document(doc_id: str):
         else:
             raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found.")
 
-    metadata, body = bench_cp6.parse_markdown(path)
+    metadata, body = parse_markdown(path)
     raw_text = path.read_text(encoding="utf-8")
 
     sections = []
@@ -219,15 +266,14 @@ def chunk_document(req: ChunkRequest):
         path = DATA_DIR / f"{req.doc_id}.md"
         if not path.exists():
             raise HTTPException(status_code=404, detail=f"Document '{req.doc_id}' not found.")
-        _, body = bench_cp6.parse_markdown(path)
+        _, body = parse_markdown(path)
     elif req.text:
         body = req.text
     else:
-        # Default to first document if neither specified
         first = next(DATA_DIR.glob("*.md"), None)
         if first:
             target_id = first.stem
-            _, body = bench_cp6.parse_markdown(first)
+            _, body = parse_markdown(first)
         else:
             raise HTTPException(status_code=400, detail="Must provide 'doc_id' or 'text'.")
 
@@ -316,156 +362,6 @@ def search_chunks(req: SearchRequest):
     }
 
 
-def execute_benchmark_evaluation() -> Dict[str, Any]:
-    global _cached_benchmark_results
-    embedding_fn = get_embedder()
-
-    strategies_config = [
-        ("FixedSizeChunker", FixedSizeChunker(chunk_size=CHUNK_SIZE, overlap=50)),
-        ("SentenceChunker", SentenceChunker(max_sentences_per_chunk=3)),
-        ("RecursiveChunker", RecursiveChunker(chunk_size=CHUNK_SIZE)),
-    ]
-
-    strategy_results = {}
-    summary_comparison = []
-
-    for name, chunker in strategies_config:
-        documents = bench_cp6.load_chunks(chunker)
-        store = EmbeddingStore(
-            collection_name=f"bench_{name}",
-            embedding_fn=embedding_fn,
-        )
-        store.add_documents(documents)
-
-        total_score = 0
-        top1_hits = 0
-        queries_data = []
-
-        for b in bench_cp6.BENCHMARKS:
-            # 1. With Filter
-            filtered_res = bench_cp6.run_search(store, b, use_filter=True)
-            score, position, contains = bench_cp6.score_result(filtered_res, b)
-            total_score += score
-            if position == 1 and contains:
-                top1_hits += 1
-
-            def format_hits(hits):
-                out = []
-                for idx, r in enumerate(hits, 1):
-                    out.append({
-                        "position": idx,
-                        "score": round(float(r["score"]), 4),
-                        "id": r["id"],
-                        "doc_id": r["metadata"].get("doc_id"),
-                        "audience": r["metadata"].get("audience"),
-                        "title": r["metadata"].get("title", ""),
-                        "snippet": r["content"][:160].replace("\n", " ") + "...",
-                    })
-                return out
-
-            # 2. Without Filter (A/B testing)
-            unfiltered_res = bench_cp6.run_search(store, b, use_filter=False)
-            u_score, u_pos, u_contains = bench_cp6.score_result(unfiltered_res, b)
-
-            queries_data.append({
-                "id": b["id"],
-                "question": b["question"],
-                "gold_doc": b["gold_doc"],
-                "gold_terms": b["gold_terms"],
-                "metadata_filter": b["metadata_filter"],
-                "with_filter": {
-                    "score": score,
-                    "gold_position": position,
-                    "contains_answer": contains,
-                    "top_3": format_hits(filtered_res),
-                },
-                "without_filter": {
-                    "score": u_score,
-                    "gold_position": u_pos,
-                    "contains_answer": u_contains,
-                    "top_3": format_hits(unfiltered_res),
-                },
-            })
-
-        strategy_results[name] = {
-            "name": name,
-            "total_chunks": len(documents),
-            "total_score": total_score,
-            "max_score": 10,
-            "accuracy_pct": round((total_score / 10) * 100, 1),
-            "top1_hits": top1_hits,
-            "queries": queries_data,
-        }
-
-        summary_comparison.append({
-            "strategy": name,
-            "total_chunks": len(documents),
-            "score": f"{total_score}/10",
-            "score_num": total_score,
-            "accuracy": f"{round((total_score / 10) * 100, 1)}%",
-            "top1_matches": f"{top1_hits}/5",
-        })
-
-    # Sort summary by score desc
-    summary_comparison.sort(key=lambda x: x["score_num"], reverse=True)
-
-    # A/B Comparison analysis
-    ab_analysis = []
-    target_benchmark = bench_cp6.BENCHMARKS[2]  # Query 3 or 4
-    for name in ["FixedSizeChunker", "SentenceChunker", "RecursiveChunker"]:
-        q_item = next(q for q in strategy_results[name]["queries"] if q["id"] == 4)
-        top3_w = [item["doc_id"] for item in q_item["with_filter"]["top_3"]]
-        top3_wo = [item["doc_id"] for item in q_item["without_filter"]["top_3"]]
-        ab_analysis.append({
-            "strategy": name,
-            "query": q_item["question"],
-            "with_filter_top3": top3_w,
-            "without_filter_top3": top3_wo,
-            "filter_helped": top3_w != top3_wo or q_item["with_filter"]["score"] >= q_item["without_filter"]["score"],
-            "observation": "Filter loại bỏ hoàn toàn tài liệu của đối tượng khác (Buyer) lọt vào top-3" if any("buyer" in d for d in top3_wo) else "Giữ vững thứ hạng top relevant chunks",
-        })
-
-    # Failure analysis for Query 5
-    q5_fixed = next(q for q in strategy_results["FixedSizeChunker"]["queries"] if q["id"] == 5)
-    failure_analysis = {
-        "failed_query_id": 5,
-        "question": q5_fixed["question"],
-        "gold_doc": q5_fixed["gold_doc"],
-        "gold_terms": q5_fixed["gold_terms"],
-        "scores_by_strategy": {
-            "FixedSizeChunker": strategy_results["FixedSizeChunker"]["queries"][4]["with_filter"]["score"],
-            "SentenceChunker": strategy_results["SentenceChunker"]["queries"][4]["with_filter"]["score"],
-            "RecursiveChunker": strategy_results["RecursiveChunker"]["queries"][4]["with_filter"]["score"],
-        },
-        "reason": (
-            "Chunk đúng chủ đề nhưng không chứa số liệu (hoặc chứa số liệu không trọn vẹn) đã nhận điểm cosine tương đương "
-            "với chunk có đáp án. Cosine similarity đo độ tương đồng chủ đề tổng quát ('chế tài', 'xử phạt'), "
-            "không đo mật độ thông tin trả lời được (answerability)."
-        ),
-        "proposed_fixes": [
-            "Tích hợp Hybrid Search (kết hợp BM25 cho tra cứu từ khóa chính xác '12 điểm' + Dense vector search).",
-            "Bổ sung Cross-Encoder Reranker chấm điểm trực tiếp cặp (Query, Chunk) sau khi lấy top-k.",
-            "Bổ sung metadata cấp độ phạt hoặc nhóm nguyên khối bảng quy định không bị cắt rời.",
-        ],
-    }
-
-    _cached_benchmark_results = {
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "model": LOCAL_EMBEDDING_MODEL,
-        "summary": summary_comparison,
-        "ab_analysis": ab_analysis,
-        "failure_analysis": failure_analysis,
-        "strategies": strategy_results,
-    }
-    return _cached_benchmark_results
-
-
-@app.post("/api/benchmark/run")
-def run_benchmark_endpoint(req: Optional[BenchmarkRunRequest] = None):
-    results = execute_benchmark_evaluation()
-    return results
-
-
 @app.post("/api/chat")
 def chat_endpoint(req: ChatRequest):
     if not req.message.strip():
@@ -498,7 +394,8 @@ def chat_endpoint(req: ChatRequest):
         doc_id = meta.get("doc_id", "unknown")
         title = meta.get("title", doc_id)
         source_url = meta.get("source_url", "")
-        snippet_clean = r["content"][:160].replace(chr(10), " ") + "..."
+        c_text = r["content"]
+        snippet_clean = c_text[:160].replace(chr(10), " ") + "..."
         citations.append({
             "index": idx,
             "id": r["id"],
@@ -507,11 +404,11 @@ def chat_endpoint(req: ChatRequest):
             "audience": meta.get("audience", ""),
             "score": round(float(r["score"]), 4),
             "source_url": source_url,
-            "content": r["content"],
+            "content": c_text,
             "snippet": snippet_clean,
         })
-        c_text = r["content"]
         context_parts.append(f"[{idx}] Source: {title} ({source_url})\n{c_text}")
+
     context_str = "\n\n".join(context_parts)
     prompt = f"""You are a knowledge base assistant for Shopee Policies.
 Answer the user's question accurately in Vietnamese using ONLY the provided context.
@@ -582,6 +479,166 @@ ANSWER:"""
     }
 
 
+def execute_benchmark_evaluation() -> Dict[str, Any]:
+    global _cached_benchmark_results
+    embedding_fn = get_embedder()
+
+    benchmark_queries = bench.GOLDEN_SET if bench and hasattr(bench, "GOLDEN_SET") else []
+
+    strategies_config = [
+        ("FixedSizeChunker", FixedSizeChunker(chunk_size=CHUNK_SIZE, overlap=50)),
+        ("SentenceChunker", SentenceChunker(max_sentences_per_chunk=3)),
+        ("RecursiveChunker", RecursiveChunker(chunk_size=CHUNK_SIZE)),
+        ("HeadingAwarePolicyChunker", get_chunker("HeadingAwarePolicyChunker")),
+    ]
+
+    strategy_results = {}
+    summary_comparison = []
+
+    for name, chunker in strategies_config:
+        documents = load_all_chunks(chunker)
+        store = EmbeddingStore(
+            collection_name=f"bench_{name}",
+            embedding_fn=embedding_fn,
+        )
+        store.add_documents(documents)
+
+        total_score = 0
+        top1_hits = 0
+        queries_data = []
+
+        for b in benchmark_queries:
+            # 1. Search with and without filter
+            filtered_res = store.search_with_filter(b["query"], top_k=3, metadata_filter=b.get("metadata_filter"))
+            unfiltered_res = store.search(b["query"], top_k=3)
+
+            score, first_rank, matched, total_markers = bench.evaluate_retrieval(
+                filtered_res, b["answer_markers"], b["source_file"]
+            )
+            u_score, u_first_rank, u_matched, _ = bench.evaluate_retrieval(
+                unfiltered_res, b["answer_markers"], b["source_file"]
+            )
+
+            total_score += score
+            if first_rank == 1 and matched == total_markers:
+                top1_hits += 1
+
+            def format_hits(hits):
+                out = []
+                for idx, r in enumerate(hits, 1):
+                    out.append({
+                        "position": idx,
+                        "score": round(float(r["score"]), 4),
+                        "id": r["id"],
+                        "doc_id": r["metadata"].get("doc_id"),
+                        "audience": r["metadata"].get("audience"),
+                        "title": r["metadata"].get("title", ""),
+                        "snippet": r["content"][:160].replace("\n", " ") + "...",
+                    })
+                return out
+
+            queries_data.append({
+                "id": b["id"],
+                "question": b["query"],
+                "gold_doc": Path(b["source_file"]).stem,
+                "gold_terms": b["answer_markers"],
+                "metadata_filter": b.get("metadata_filter"),
+                "with_filter": {
+                    "score": score,
+                    "gold_position": first_rank,
+                    "contains_answer": matched > 0,
+                    "top_3": format_hits(filtered_res),
+                },
+                "without_filter": {
+                    "score": u_score,
+                    "gold_position": u_first_rank,
+                    "contains_answer": u_matched > 0,
+                    "top_3": format_hits(unfiltered_res),
+                },
+            })
+
+        strategy_results[name] = {
+            "name": name,
+            "total_chunks": len(documents),
+            "total_score": total_score,
+            "max_score": 10,
+            "accuracy_pct": round((total_score / 10) * 100, 1),
+            "top1_hits": top1_hits,
+            "queries": queries_data,
+        }
+
+        summary_comparison.append({
+            "strategy": name,
+            "total_chunks": len(documents),
+            "score": f"{total_score}/10",
+            "score_num": total_score,
+            "accuracy": f"{round((total_score / 10) * 100, 1)}%",
+            "top1_matches": f"{top1_hits}/5",
+        })
+
+    # Sort summary by score desc
+    summary_comparison.sort(key=lambda x: x["score_num"], reverse=True)
+
+    # A/B Comparison analysis for Q1
+    q1_item = benchmark_queries[0]
+    ab_analysis = []
+    for name in ["FixedSizeChunker", "SentenceChunker", "RecursiveChunker", "HeadingAwarePolicyChunker"]:
+        q_data = next(q for q in strategy_results[name]["queries"] if q["id"] == "Q1")
+        top3_w = [item["doc_id"] for item in q_data["with_filter"]["top_3"]]
+        top3_wo = [item["doc_id"] for item in q_data["without_filter"]["top_3"]]
+        f_rank = q_data["with_filter"]["gold_position"]
+        u_rank = q_data["without_filter"]["gold_position"]
+        obs = "improved" if f_rank and (not u_rank or f_rank < u_rank) else ("unchanged" if f_rank == u_rank else "different")
+
+        ab_analysis.append({
+            "strategy": name,
+            "query": q1_item["query"],
+            "with_filter_top3": top3_w,
+            "without_filter_top3": top3_wo,
+            "filter_helped": obs == "improved",
+            "observation": f"{obs} (unfiltered rank={u_rank}, filtered rank={f_rank})",
+        })
+
+    # Failure analysis for Q5
+    q5_fixed = benchmark_queries[4]
+    failure_analysis = {
+        "failed_query_id": "Q5",
+        "question": q5_fixed["query"],
+        "gold_doc": Path(q5_fixed["source_file"]).stem,
+        "gold_terms": q5_fixed["answer_markers"],
+        "scores_by_strategy": {
+            s["strategy"]: next(q["with_filter"]["score"] for q in strategy_results[s["strategy"]]["queries"] if q["id"] == "Q5")
+            for s in summary_comparison
+        },
+        "reason": (
+            "Content audit score was 0/2 across all chunking strategies. "
+            "Top-3 retrieved chunks did not contain every frozen answer marker across gold-source chunks (8 markers required). "
+            "Cosine similarity measures overall topical closeness rather than complete enumeration density."
+        ),
+        "proposed_fixes": [
+            "Tích hợp Multi-chunk Aggregation: Tự động gom các chunk liền kề trong cùng Section khi phát hiện câu hỏi dạng liệt kê.",
+            "Tích hợp Hybrid Search: Kết hợp BM25 cho tra cứu từ khóa liệt kê + Vector search cho ngữ nghĩa.",
+            "Document Structure Tuning: Giữ nguyên bảng liệt kê các lý do đổi trả trong một Atomic chunk.",
+        ],
+    }
+
+    _cached_benchmark_results = {
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "model": LOCAL_EMBEDDING_MODEL,
+        "summary": summary_comparison,
+        "ab_analysis": ab_analysis,
+        "failure_analysis": failure_analysis,
+        "strategies": strategy_results,
+    }
+    return _cached_benchmark_results
+
+
+@app.post("/api/benchmark/run")
+def run_benchmark_endpoint(req: Optional[BenchmarkRunRequest] = None):
+    results = execute_benchmark_evaluation()
+    return results
+
+
 @app.get("/api/reports/benchmark")
 def get_benchmark_report(download: bool = Query(default=False)):
     global _cached_benchmark_results
@@ -591,7 +648,6 @@ def get_benchmark_report(download: bool = Query(default=False)):
     data = _cached_benchmark_results
 
     if download:
-        # Generate clean Markdown report for download
         md_lines = [
             "# Báo Cáo Đánh Giá Benchmark Truy Xuất (CP6)",
             f"- **Thời điểm chạy:** {data['timestamp']}",
@@ -635,7 +691,6 @@ def get_benchmark_report(download: bool = Query(default=False)):
     return data
 
 
-# Mount a basic root route for convenience
 @app.get("/")
 def root():
     return {
@@ -647,6 +702,7 @@ def root():
             "/api/documents/{id}",
             "/api/chunk",
             "/api/search",
+            "/api/chat",
             "/api/benchmark/run",
             "/api/reports/benchmark",
         ],
