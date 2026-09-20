@@ -1,0 +1,164 @@
+
+================================================================================
+BENCHMARK RESULTS
+================================================================================
+
+--------------------------------------------------------------------------------
+QUERY 1
+Question: Thời hạn gửi yêu cầu trả hàng và hoàn tiền của người mua trên Shopee Mall là bao nhiêu ngày?
+Filter: {'audience': 'buyer'}
+Gold Answer: 15 ngày kể từ ngày nhận hàng thành công đối với Shopee Mall (shop thông thường là 3-7 ngày).
+
+Top-3:
+
+[1]
+score  : 0.1998
+id     : shopee-warranty-electronic-service#0
+doc_id : shopee-warranty-electronic-service
+source : https://help.shopee.vn/portal/4/article/188931
+content:
+# Quy định bảo hành điện tử và sửa chữa ## 1. Khái niệm và Hình thức Bảo hành Điện tử (e-Warranty) Bảo hành điện tử là hình thức quản lý thông tin bảo hành trực tuyến thông qua mã IMEI hoặc số Serial Number của thiết bị và số điện thoại mua hàng của khách hàng, thay thế hoàn toàn cho phiếu bảo hành giấy truyền thống. ## 2.
+
+[2]
+score  : 0.1947
+id     : shopee-brand-warranty-coverage#5
+doc_id : shopee-brand-warranty-coverage
+source : https://help.shopee.vn/portal/4/article/190242
+content:
+- Sản phẩm bị can thiệp phần cứng hoặc can thiệp sửa chữa tại các cơ sở không được ủy quyền chính hãng. - Thiết bị bị can thiệp phần mềm trái phép: bẻ khóa hệ thống (root, jailbreak), cài đặt ROM ngoài gây mất bảo hành. - Hao mòn tự nhiên theo thời gian sử dụng đối với linh kiện tiêu hao (chai pin theo chu kỳ sạc, phai màu vỏ máy).
+
+[3]
+score  : 0.1524
+id     : shopee-warranty-electronic-service#4
+doc_id : shopee-warranty-electronic-service
+source : https://help.shopee.vn/portal/4/article/188931
+content:
+- Thời gian sửa chữa tiêu chuẩn: Tối đa từ 7 đến 14 ngày làm việc. Nếu linh kiện thay thế phải nhập khẩu từ nước ngoài quá 21 ngày, Người mua được hỗ trợ mượn máy dùng tạm hoặc đổi máy mới tương đương.
+
+--------------------------------------------------------------------------------
+QUERY 2
+Question: Các trường hợp nào Shopee Mall và Trung tâm bảo hành từ chối tiếp nhận bảo hành thiết bị?
+Filter: {'audience': 'buyer'}
+Gold Answer: Rơi vỡ móp méo, vào nước/chất lỏng, can thiệp sửa chữa không ủy quyền, can thiệp phần mềm (root/jailbreak), và linh kiện tiêu hao (chai pin).
+
+Top-3:
+
+[1]
+score  : 0.2934
+id     : shopee-warranty-electronic-service#0
+doc_id : shopee-warranty-electronic-service
+source : https://help.shopee.vn/portal/4/article/188931
+content:
+# Quy định bảo hành điện tử và sửa chữa ## 1. Khái niệm và Hình thức Bảo hành Điện tử (e-Warranty) Bảo hành điện tử là hình thức quản lý thông tin bảo hành trực tuyến thông qua mã IMEI hoặc số Serial Number của thiết bị và số điện thoại mua hàng của khách hàng, thay thế hoàn toàn cho phiếu bảo hành giấy truyền thống. ## 2.
+
+[2]
+score  : 0.2871
+id     : shopee-return-refund-rights-buyer#5
+doc_id : shopee-return-refund-rights-buyer
+source : https://help.shopee.vn/portal/4/article/77262
+content:
+- Người mua có thể chọn hình thức lấy hàng trả tận nơi bởi đơn vị vận chuyển hoặc tự đem ra bưu cục gửi hoàn trả miễn phí. ## 5. Thời gian xử lý hoàn tiền cho Người mua - Hoàn vào Ví ShopeePay hoặc Số dư TK Shopee: Hoàn tất trong vòng 24 giờ sau khi yêu cầu được phê duyệt.
+
+[3]
+score  : 0.2434
+id     : shopee-terms-service-warranty-general#3
+doc_id : shopee-terms-service-warranty-general
+source : https://help.shopee.vn/portal/4/article/77245
+content:
+Cơ chế bảo vệ người tiêu dùng (Shopee Đảm Bảo) - Dịch vụ Shopee Đảm Bảo (Shopee Guarantee) là cơ chế bảo vệ thanh toán: Tiền thanh toán của Người mua sẽ được Shopee giữ an toàn trong tài khoản trung gian và chỉ được giải ngân cho Người bán sau khi Người mua xác nhận đã nhận hàng thỏa đáng hoặc khi hết thời hạn khiếu nại quy định. - Cơ chế này bảo đảm Người mua không bị mất tiền nếu Người bán không giao hàng hoặc giao hàng sai, bể vỡ. ## 4.
+
+--------------------------------------------------------------------------------
+QUERY 3
+Question: Người bán có thời hạn bao lâu để phản hồi khiếu nại trả hàng và sẽ bị xử lý thế nào nếu không phản hồi?
+Filter: {'audience': 'seller'}
+Gold Answer: Tối đa 2 ngày (48 giờ). Nếu không phản hồi, hệ thống Shopee tự động xử thắng cho Người mua và hoàn tiền ngay lập tức từ tài khoản Shop.
+
+Top-3:
+
+[1]
+score  : 0.2503
+id     : shopee-prohibited-items-policy#6
+doc_id : shopee-prohibited-items-policy
+source : https://help.shopee.vn/portal/4/article/77246
+content:
+- Tạm khóa hoặc khóa vĩnh viễn tài khoản Người bán và chuyển hồ sơ sang cơ quan công an xử lý nếu có dấu hiệu hình sự.
+
+[2]
+score  : 0.2326
+id     : shopee-prohibited-items-policy#0
+doc_id : shopee-prohibited-items-policy
+source : https://help.shopee.vn/portal/4/article/77246
+content:
+# Chính sách hàng hóa cấm và hạn chế ## 1. Danh mục hàng hóa cấm kinh doanh trên Shopee Người bán tuyệt đối không được phép đăng bán, quảng bá hoặc giao dịch các mặt hàng sau trên sàn: - Vũ khí quân dụng, súng đạn, công cụ hỗ trợ, vật liệu nổ và chất độc hại. - Các chất ma túy, tiền chất ma túy, chất kích thích và thuốc lá điện tử, tinh dầu vape.
+
+[3]
+score  : 0.1892
+id     : shopee-prohibited-items-policy#4
+doc_id : shopee-prohibited-items-policy
+source : https://help.shopee.vn/portal/4/article/77246
+content:
+- Cung cấp hóa đơn chứng từ đầu vào hợp pháp khi bộ phận kiểm duyệt của Shopee yêu cầu trong vòng 24 giờ. - Mô tả chính xác, không dùng từ ngữ gây hiểu nhầm hoặc quảng cáo quá sự thật về tính năng sản phẩm. ## 4.
+
+--------------------------------------------------------------------------------
+QUERY 4
+Question: Trong thời gian bảo hành, người bán có trách nhiệm xử lý và sửa chữa sản phẩm tối đa trong bao nhiêu ngày?
+Filter: {'audience': 'seller'}
+Gold Answer: Xác nhận tiếp nhận trong vòng 2 ngày làm việc; hoàn tất sửa chữa và gửi trả tối đa 14 ngày làm việc. Nếu không sửa được phải đổi máy mới hoặc hoàn tiền 100%.
+
+Top-3:
+
+[1]
+score  : 0.2364
+id     : shopee-seller-dispute-and-penalty#2
+doc_id : shopee-seller-dispute-and-penalty
+source : https://help.shopee.vn/portal/4/article/77265
+content:
+Hệ thống Điểm Phạt Sao Quả Tạ (Penalty Points) Shopee áp dụng thang điểm phạt Sao Quả Tạ để đánh giá và chế tài các hành vi vi phạm của Người bán: - Tỷ lệ đơn hàng không thành công hoặc giao trễ vượt ngưỡng: Phạt 1 đến 2 điểm. - Hủy đơn hàng của khách vì lý do hết hàng hoặc từ chối phục vụ: Phạt 2 điểm/đơn. - Đăng bán hàng giả, hàng vi phạm bản quyền thương hiệu: Phạt 3 điểm/sản phẩm vi phạm.
+
+[2]
+score  : 0.1647
+id     : shopee-seller-dispute-and-penalty#3
+doc_id : shopee-seller-dispute-and-penalty
+source : https://help.shopee.vn/portal/4/article/77265
+content:
+- Gửi bưu phẩm rỗng, cố tình gian lận hàng hóa: Phạt ngay 3 điểm và tạm khóa tài khoản shop. ## 4. Các mức chế tài theo mức Điểm Phạt - Mức 1 (Đạt 3 điểm phạt): Tạm ngừng quyền tham gia các chương trình Flash Sale và chiến dịch Marketing của Shopee trong 28 ngày.
+
+[3]
+score  : 0.0900
+id     : shopee-prohibited-items-policy#6
+doc_id : shopee-prohibited-items-policy
+source : https://help.shopee.vn/portal/4/article/77246
+content:
+- Tạm khóa hoặc khóa vĩnh viễn tài khoản Người bán và chuyển hồ sơ sang cơ quan công an xử lý nếu có dấu hiệu hình sự.
+
+--------------------------------------------------------------------------------
+QUERY 5
+Question: Shop bị tích lũy từ 12 điểm phạt Sao Quả Tạ trở lên sẽ phải chịu những chế tài xử phạt nào?
+Filter: {'audience': 'seller'}
+Gold Answer: Áp dụng Mức 4: Đóng băng tài khoản Shop, ngưng toàn bộ hoạt động giao dịch và rút tiền.
+
+Top-3:
+
+[1]
+score  : 0.1891
+id     : shopee-seller-return-warranty-fulfillment#3
+doc_id : shopee-seller-return-warranty-fulfillment
+source : https://help.shopee.vn/portal/4/article/79314
+content:
+Quy định chi phí vận chuyển trong bảo hành - Trong vòng 30 ngày đầu sau khi mua hàng: Người bán chịu toàn bộ 100% chi phí vận chuyển 2 chiều (từ Người mua đến Shop và từ Shop gửi lại Người mua) nếu sản phẩm phát sinh lỗi kỹ thuật do nhà sản xuất. - Sau 30 ngày đến hết thời hạn bảo hành: Người mua chịu chi phí gửi hàng đến Shop, và Người bán chịu chi phí gửi trả hàng lại cho Người mua sau khi đã hoàn tất bảo hành. ## 4.
+
+[2]
+score  : 0.1810
+id     : shopee-seller-dispute-and-penalty#4
+doc_id : shopee-seller-dispute-and-penalty
+source : https://help.shopee.vn/portal/4/article/77265
+content:
+- Mức 2 (Đạt 6 điểm phạt): Ẩn toàn bộ sản phẩm của Shop khỏi danh mục gợi ý và kết quả tìm kiếm. - Mức 3 (Đạt 9 điểm phạt): Vô hiệu hóa tính năng đăng bán sản phẩm mới và chỉnh sửa sản phẩm hiện có. - Mức 4 (Đạt 12 điểm phạt trở lên): Đóng băng tài khoản Shop, ngưng toàn bộ hoạt động giao dịch và rút tiền.
+
+[3]
+score  : 0.1769
+id     : shopee-prohibited-items-policy#6
+doc_id : shopee-prohibited-items-policy
+source : https://help.shopee.vn/portal/4/article/77246
+content:
+- Tạm khóa hoặc khóa vĩnh viễn tài khoản Người bán và chuyển hồ sơ sang cơ quan công an xử lý nếu có dấu hiệu hình sự.

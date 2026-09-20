@@ -4,6 +4,9 @@ import hashlib
 import math
 import os
 
+if "HF_HUB_OFFLINE" not in os.environ:
+    os.environ["HF_HUB_OFFLINE"] = "1"
+
 # Multilingual model suitable for the Vietnamese corpora used in this Lab.
 # The local backend remains optional; required checkpoints use MockEmbedder.
 LOCAL_EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
@@ -34,7 +37,12 @@ class LocalEmbedder:
     """Sentence Transformers-backed local embedder."""
 
     def __init__(self, model_name: str = LOCAL_EMBEDDING_MODEL) -> None:
+        import os
         from sentence_transformers import SentenceTransformer
+
+        # Ensure offline mode uses cached snapshots without network timeout
+        if "HF_HUB_OFFLINE" not in os.environ:
+            os.environ["HF_HUB_OFFLINE"] = "1"
 
         self.model_name = model_name
         self._backend_name = model_name
