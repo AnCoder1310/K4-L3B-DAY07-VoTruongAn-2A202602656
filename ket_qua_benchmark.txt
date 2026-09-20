@@ -1,164 +1,259 @@
+============================================================
+LAB 7 BENCHMARK
+============================================================
+Strategy: HeadingAwarePolicyChunker
+Chunker: HeadingAwarePolicyChunker()
+Embedder: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+Corpus: data/shopee-warranty
+Documents: 8
+Chunks: 49
+Top-K: 3
+Benchmark queries: 5
+============================================================
 
-================================================================================
-BENCHMARK RESULTS
-================================================================================
+============================================================
+Q1 — UNFILTERED
+Query: Quyền và trách nhiệm của tôi đối với việc bảo hành sản phẩm trên sàn là gì?
+Filter: None
+Gold answer: Người Bán có trách nhiệm tiếp nhận bảo hành sản phẩm, dịch vụ cho Người Mua như cam kết trong Chính sách bảo hành sản phẩm của Người bán và/hoặc của nhà sản xuất và thông tin về Chính sách bảo hành này phải được được đăng tải trên Sàn Shopee trong phần mô tả về sản phẩm, dịch vụ.
+Gold source: seller-warranty-policy.md
 
---------------------------------------------------------------------------------
-QUERY 1
-Question: Thời hạn gửi yêu cầu trả hàng và hoàn tiền của người mua trên Shopee Mall là bao nhiêu ngày?
-Filter: {'audience': 'buyer'}
-Gold Answer: 15 ngày kể từ ngày nhận hàng thành công đối với Shopee Mall (shop thông thường là 3-7 ngày).
+Top 1
+score: 0.6084
+doc_id: seller-warranty-policy
+audience: seller
+content: 3. Quyền và trách nhiệm của Người bán trên website/ứng dụng Shopee
+Ngoài các quyền và nghĩa vụ chung của Thành viên trên website/ứng dụng Shopee, Người bán còn có các quyền và nghĩa vụ như sau:
 
-Top-3:
+- Cung cấp đầy đủ thông tin về hàng hóa, dịch vụ theo quy định từ Điều 30 đến Điều 34 Nghị định 52 khi bán hàng hóa hoặc cung ứng dịch vụ trên sàn giao dịch thương mại điện tử.
+- Đảm bảo tính chính xác, trung thực của thông tin về hàng hóa, dịch vụ cung cấp trên sàn giao dịch thương mại điện tử.
 
-[1]
-score  : 0.1998
-id     : shopee-warranty-electronic-service#0
-doc_id : shopee-warranty-electronic-service
-source : https://help.shopee.vn/portal/4/article/188931
-content:
-# Quy định bảo hành điện tử và sửa chữa ## 1. Khái niệm và Hình thức Bảo hành Điện tử (e-Warranty) Bảo hành điện tử là hình thức quản lý thông tin bảo hành trực tuyến thông qua mã IMEI hoặc số Serial Number của thiết bị và số điện thoại mua hàng của khách hàng, thay thế hoàn toàn cho phiếu bảo hành giấy truyền thống. ## 2.
+Top 2
+score: 0.6020
+doc_id: seller-warranty-policy
+audience: seller
+content: 4. Chính sách bảo hành
+Người Bán có trách nhiệm tiếp nhận bảo hành sản phẩm, dịch vụ cho Người Mua như cam kết trong Chính sách bảo hành sản phẩm của Người bán và/hoặc của nhà sản xuất và thông tin về Chính sách bảo hành này phải được được đăng tải trên Sàn Shopee trong phần mô tả về sản phẩm, dịch vụ.
 
-[2]
-score  : 0.1947
-id     : shopee-brand-warranty-coverage#5
-doc_id : shopee-brand-warranty-coverage
-source : https://help.shopee.vn/portal/4/article/190242
-content:
-- Sản phẩm bị can thiệp phần cứng hoặc can thiệp sửa chữa tại các cơ sở không được ủy quyền chính hãng. - Thiết bị bị can thiệp phần mềm trái phép: bẻ khóa hệ thống (root, jailbreak), cài đặt ROM ngoài gây mất bảo hành. - Hao mòn tự nhiên theo thời gian sử dụng đối với linh kiện tiêu hao (chai pin theo chu kỳ sạc, phai màu vỏ máy).
+Đối với Sản phẩm, dịch vụ do Shopee đăng bán trực tiếp, việc bảo hành sẽ được thực hiện theo chính sách bảo hành đối với từng sản phẩm, dịch vụ được công bố trong phần mô tả của sản phẩm, dịch vụ
 
-[3]
-score  : 0.1524
-id     : shopee-warranty-electronic-service#4
-doc_id : shopee-warranty-electronic-service
-source : https://help.shopee.vn/portal/4/article/188931
-content:
-- Thời gian sửa chữa tiêu chuẩn: Tối đa từ 7 đến 14 ngày làm việc. Nếu linh kiện thay thế phải nhập khẩu từ nước ngoài quá 21 ngày, Người mua được hỗ trợ mượn máy dùng tạm hoặc đổi máy mới tương đương.
+Top 3
+score: 0.6010
+doc_id: buyer-warranty-policy
+audience: buyer
+content: 4. Chính sách bảo hành
+Người Mua có quyền yêu cầu bảo hành phù hợp với Chính sách bảo hành của Người Bán hoặc Nhà sản xuất khi đáp ứng các điều kiện để được bảo hành theo Chính sách đã công bố của Người Bán và/hoặc Nhà sản xuất.
 
---------------------------------------------------------------------------------
-QUERY 2
-Question: Các trường hợp nào Shopee Mall và Trung tâm bảo hành từ chối tiếp nhận bảo hành thiết bị?
-Filter: {'audience': 'buyer'}
-Gold Answer: Rơi vỡ móp méo, vào nước/chất lỏng, can thiệp sửa chữa không ủy quyền, can thiệp phần mềm (root/jailbreak), và linh kiện tiêu hao (chai pin).
+Người Mua có quyền khiếu nại, khiếu kiện Người Bán trong trường hợp Người Bán từ chối bảo hành không phù hợp với Chính sách bảo hành đã công bố.
+Relevant evidence found: Yes, first marker rank 2
+Gold-marker coverage: 3/3 across gold-source chunks in top-3
+Agent answer: not evaluated in this shared retrieval benchmark.
+Retrieval score: 1/2
 
-Top-3:
-
-[1]
-score  : 0.2934
-id     : shopee-warranty-electronic-service#0
-doc_id : shopee-warranty-electronic-service
-source : https://help.shopee.vn/portal/4/article/188931
-content:
-# Quy định bảo hành điện tử và sửa chữa ## 1. Khái niệm và Hình thức Bảo hành Điện tử (e-Warranty) Bảo hành điện tử là hình thức quản lý thông tin bảo hành trực tuyến thông qua mã IMEI hoặc số Serial Number của thiết bị và số điện thoại mua hàng của khách hàng, thay thế hoàn toàn cho phiếu bảo hành giấy truyền thống. ## 2.
-
-[2]
-score  : 0.2871
-id     : shopee-return-refund-rights-buyer#5
-doc_id : shopee-return-refund-rights-buyer
-source : https://help.shopee.vn/portal/4/article/77262
-content:
-- Người mua có thể chọn hình thức lấy hàng trả tận nơi bởi đơn vị vận chuyển hoặc tự đem ra bưu cục gửi hoàn trả miễn phí. ## 5. Thời gian xử lý hoàn tiền cho Người mua - Hoàn vào Ví ShopeePay hoặc Số dư TK Shopee: Hoàn tất trong vòng 24 giờ sau khi yêu cầu được phê duyệt.
-
-[3]
-score  : 0.2434
-id     : shopee-terms-service-warranty-general#3
-doc_id : shopee-terms-service-warranty-general
-source : https://help.shopee.vn/portal/4/article/77245
-content:
-Cơ chế bảo vệ người tiêu dùng (Shopee Đảm Bảo) - Dịch vụ Shopee Đảm Bảo (Shopee Guarantee) là cơ chế bảo vệ thanh toán: Tiền thanh toán của Người mua sẽ được Shopee giữ an toàn trong tài khoản trung gian và chỉ được giải ngân cho Người bán sau khi Người mua xác nhận đã nhận hàng thỏa đáng hoặc khi hết thời hạn khiếu nại quy định. - Cơ chế này bảo đảm Người mua không bị mất tiền nếu Người bán không giao hàng hoặc giao hàng sai, bể vỡ. ## 4.
-
---------------------------------------------------------------------------------
-QUERY 3
-Question: Người bán có thời hạn bao lâu để phản hồi khiếu nại trả hàng và sẽ bị xử lý thế nào nếu không phản hồi?
+============================================================
+Q1 — FILTERED audience=seller
+Query: Quyền và trách nhiệm của tôi đối với việc bảo hành sản phẩm trên sàn là gì?
 Filter: {'audience': 'seller'}
-Gold Answer: Tối đa 2 ngày (48 giờ). Nếu không phản hồi, hệ thống Shopee tự động xử thắng cho Người mua và hoàn tiền ngay lập tức từ tài khoản Shop.
+Gold answer: Người Bán có trách nhiệm tiếp nhận bảo hành sản phẩm, dịch vụ cho Người Mua như cam kết trong Chính sách bảo hành sản phẩm của Người bán và/hoặc của nhà sản xuất và thông tin về Chính sách bảo hành này phải được được đăng tải trên Sàn Shopee trong phần mô tả về sản phẩm, dịch vụ.
+Gold source: seller-warranty-policy.md
 
-Top-3:
+Top 1
+score: 0.6084
+doc_id: seller-warranty-policy
+audience: seller
+content: 3. Quyền và trách nhiệm của Người bán trên website/ứng dụng Shopee
+Ngoài các quyền và nghĩa vụ chung của Thành viên trên website/ứng dụng Shopee, Người bán còn có các quyền và nghĩa vụ như sau:
 
-[1]
-score  : 0.2503
-id     : shopee-prohibited-items-policy#6
-doc_id : shopee-prohibited-items-policy
-source : https://help.shopee.vn/portal/4/article/77246
-content:
-- Tạm khóa hoặc khóa vĩnh viễn tài khoản Người bán và chuyển hồ sơ sang cơ quan công an xử lý nếu có dấu hiệu hình sự.
+- Cung cấp đầy đủ thông tin về hàng hóa, dịch vụ theo quy định từ Điều 30 đến Điều 34 Nghị định 52 khi bán hàng hóa hoặc cung ứng dịch vụ trên sàn giao dịch thương mại điện tử.
+- Đảm bảo tính chính xác, trung thực của thông tin về hàng hóa, dịch vụ cung cấp trên sàn giao dịch thương mại điện tử.
 
-[2]
-score  : 0.2326
-id     : shopee-prohibited-items-policy#0
-doc_id : shopee-prohibited-items-policy
-source : https://help.shopee.vn/portal/4/article/77246
-content:
-# Chính sách hàng hóa cấm và hạn chế ## 1. Danh mục hàng hóa cấm kinh doanh trên Shopee Người bán tuyệt đối không được phép đăng bán, quảng bá hoặc giao dịch các mặt hàng sau trên sàn: - Vũ khí quân dụng, súng đạn, công cụ hỗ trợ, vật liệu nổ và chất độc hại. - Các chất ma túy, tiền chất ma túy, chất kích thích và thuốc lá điện tử, tinh dầu vape.
+Top 2
+score: 0.6020
+doc_id: seller-warranty-policy
+audience: seller
+content: 4. Chính sách bảo hành
+Người Bán có trách nhiệm tiếp nhận bảo hành sản phẩm, dịch vụ cho Người Mua như cam kết trong Chính sách bảo hành sản phẩm của Người bán và/hoặc của nhà sản xuất và thông tin về Chính sách bảo hành này phải được được đăng tải trên Sàn Shopee trong phần mô tả về sản phẩm, dịch vụ.
 
-[3]
-score  : 0.1892
-id     : shopee-prohibited-items-policy#4
-doc_id : shopee-prohibited-items-policy
-source : https://help.shopee.vn/portal/4/article/77246
-content:
-- Cung cấp hóa đơn chứng từ đầu vào hợp pháp khi bộ phận kiểm duyệt của Shopee yêu cầu trong vòng 24 giờ. - Mô tả chính xác, không dùng từ ngữ gây hiểu nhầm hoặc quảng cáo quá sự thật về tính năng sản phẩm. ## 4.
+Đối với Sản phẩm, dịch vụ do Shopee đăng bán trực tiếp, việc bảo hành sẽ được thực hiện theo chính sách bảo hành đối với từng sản phẩm, dịch vụ được công bố trong phần mô tả của sản phẩm, dịch vụ
 
---------------------------------------------------------------------------------
-QUERY 4
-Question: Trong thời gian bảo hành, người bán có trách nhiệm xử lý và sửa chữa sản phẩm tối đa trong bao nhiêu ngày?
-Filter: {'audience': 'seller'}
-Gold Answer: Xác nhận tiếp nhận trong vòng 2 ngày làm việc; hoàn tất sửa chữa và gửi trả tối đa 14 ngày làm việc. Nếu không sửa được phải đổi máy mới hoặc hoàn tiền 100%.
+Top 3
+score: 0.5685
+doc_id: seller-warranty-policy
+audience: seller
+content: 3. Quyền và trách nhiệm của Người bán trên website/ứng dụng Shopee
+- Tuân thủ quy định của pháp luật về thanh toán, quảng cáo, khuyến mại, bảo vệ quyền sở hữu trí tuệ, bảo vệ quyền lợi người tiêu dùng và các quy định của pháp luật có liên quan khác khi bán hàng hóa hoặc cung ứng dịch vụ trên sàn giao dịch thương mại điện tử.
+Relevant evidence found: Yes, first marker rank 2
+Gold-marker coverage: 3/3 across gold-source chunks in top-3
+Agent answer: not evaluated in this shared retrieval benchmark.
+Retrieval score: 1/2
+Q1 metadata filter: unchanged (unfiltered rank=2, filtered rank=2)
 
-Top-3:
+============================================================
+Q2
+Query: Đối với đơn hàng do Người bán tự vận chuyển, tôi có tối đa bao nhiêu ngày để gửi yêu cầu trả hàng kể từ lúc trạng thái cập nhật 'Lấy hàng thành công' mà tôi chưa bấm nhận hàng?
+Filter: None
+Gold answer: 20 ngày kể từ lúc đơn hàng được cập nhật trạng thái “Lấy hàng thành công” và bạn không bấm “Đã nhận được hàng”.
+Gold source: return-refund-policy.md
 
-[1]
-score  : 0.2364
-id     : shopee-seller-dispute-and-penalty#2
-doc_id : shopee-seller-dispute-and-penalty
-source : https://help.shopee.vn/portal/4/article/77265
-content:
-Hệ thống Điểm Phạt Sao Quả Tạ (Penalty Points) Shopee áp dụng thang điểm phạt Sao Quả Tạ để đánh giá và chế tài các hành vi vi phạm của Người bán: - Tỷ lệ đơn hàng không thành công hoặc giao trễ vượt ngưỡng: Phạt 1 đến 2 điểm. - Hủy đơn hàng của khách vì lý do hết hàng hoặc từ chối phục vụ: Phạt 2 điểm/đơn. - Đăng bán hàng giả, hàng vi phạm bản quyền thương hiệu: Phạt 3 điểm/sản phẩm vi phạm.
+Top 1
+score: 0.8045
+doc_id: return-refund-policy
+audience: buyer
+content: 1.2. Thời gian tối đa để gửi yêu cầu trả hàng hoàn tiền cho Shopee
+Đối với đơn hàng giao thực phẩm tươi sống & đông lạnh (trừ lý do Chưa nhận được hàng): Trong vòng 24 giờ kể từ lúc đơn hàng được cập nhật trạng thái “Giao hàng thành công”.
 
-[2]
-score  : 0.1647
-id     : shopee-seller-dispute-and-penalty#3
-doc_id : shopee-seller-dispute-and-penalty
-source : https://help.shopee.vn/portal/4/article/77265
-content:
-- Gửi bưu phẩm rỗng, cố tình gian lận hàng hóa: Phạt ngay 3 điểm và tạm khóa tài khoản shop. ## 4. Các mức chế tài theo mức Điểm Phạt - Mức 1 (Đạt 3 điểm phạt): Tạm ngừng quyền tham gia các chương trình Flash Sale và chiến dịch Marketing của Shopee trong 28 ngày.
+Đối với đơn hàng do Người bán tự vận chuyển:
 
-[3]
-score  : 0.0900
-id     : shopee-prohibited-items-policy#6
-doc_id : shopee-prohibited-items-policy
-source : https://help.shopee.vn/portal/4/article/77246
-content:
-- Tạm khóa hoặc khóa vĩnh viễn tài khoản Người bán và chuyển hồ sơ sang cơ quan công an xử lý nếu có dấu hiệu hình sự.
+- 15 ngày kể từ lúc bạn bấm “Đã nhận được hàng”, hoặc
+- 20 ngày kể từ lúc đơn hàng được cập nhật trạng thái “Lấy hàng thành công” và bạn không bấm “Đã nhận được hàng”.
 
---------------------------------------------------------------------------------
-QUERY 5
-Question: Shop bị tích lũy từ 12 điểm phạt Sao Quả Tạ trở lên sẽ phải chịu những chế tài xử phạt nào?
-Filter: {'audience': 'seller'}
-Gold Answer: Áp dụng Mức 4: Đóng băng tài khoản Shop, ngưng toàn bộ hoạt động giao dịch và rút tiền.
+Đối với các đơn hàng khác: 15 ngày kể từ lúc
 
-Top-3:
+Top 2
+score: 0.7523
+doc_id: shopee-guarantee
+audience: buyer
+content: Trường hợp hàng khác mô tả hoặc hư hỏng
+Trong trường hợp Người mua nhận được sản phẩm khác với mô tả hoặc bị hư hỏng, Người mua có thể yêu cầu Trả hàng/Hoàn tiền trong vòng 15 ngày kể từ lúc đơn hàng được cập nhật trạng thái “Giao hàng thành công”.
 
-[1]
-score  : 0.1891
-id     : shopee-seller-return-warranty-fulfillment#3
-doc_id : shopee-seller-return-warranty-fulfillment
-source : https://help.shopee.vn/portal/4/article/79314
-content:
-Quy định chi phí vận chuyển trong bảo hành - Trong vòng 30 ngày đầu sau khi mua hàng: Người bán chịu toàn bộ 100% chi phí vận chuyển 2 chiều (từ Người mua đến Shop và từ Shop gửi lại Người mua) nếu sản phẩm phát sinh lỗi kỹ thuật do nhà sản xuất. - Sau 30 ngày đến hết thời hạn bảo hành: Người mua chịu chi phí gửi hàng đến Shop, và Người bán chịu chi phí gửi trả hàng lại cho Người mua sau khi đã hoàn tất bảo hành. ## 4.
+Bạn vẫn có thể yêu cầu Trả hàng/Hoàn tiền sau khi nhấn “Đã nhận được hàng” nếu đơn hàng của bạn vẫn nằm trong thời hạn 15 ngày kể từ lúc đơn hàng được cập nhật “Giao hàng thành công”.
 
-[2]
-score  : 0.1810
-id     : shopee-seller-dispute-and-penalty#4
-doc_id : shopee-seller-dispute-and-penalty
-source : https://help.shopee.vn/portal/4/article/77265
-content:
-- Mức 2 (Đạt 6 điểm phạt): Ẩn toàn bộ sản phẩm của Shop khỏi danh mục gợi ý và kết quả tìm kiếm. - Mức 3 (Đạt 9 điểm phạt): Vô hiệu hóa tính năng đăng bán sản phẩm mới và chỉnh sửa sản phẩm hiện có. - Mức 4 (Đạt 12 điểm phạt trở lên): Đóng băng tài khoản Shop, ngưng toàn bộ hoạt động giao dịch và rút tiền.
+Top 3
+score: 0.7054
+doc_id: return-refund-policy
+audience: buyer
+content: 1.2. Thời gian tối đa để gửi yêu cầu trả hàng hoàn tiền cho Shopee
+Bạn vẫn có thể gửi yêu cầu Trả hàng/Hoàn tiền sau khi đã bấm nút “Đã nhận được hàng” và vẫn còn trong thời hạn 15 ngày Trả hàng/Hoàn tiền quy định của Shopee.
 
-[3]
-score  : 0.1769
-id     : shopee-prohibited-items-policy#6
-doc_id : shopee-prohibited-items-policy
-source : https://help.shopee.vn/portal/4/article/77246
-content:
-- Tạm khóa hoặc khóa vĩnh viễn tài khoản Người bán và chuyển hồ sơ sang cơ quan công an xử lý nếu có dấu hiệu hình sự.
+Yêu cầu Trả hàng/Hoàn tiền của bạn sẽ được phản hồi trong vòng 3-5 ngày làm việc. Hãy theo dõi mục thông báo trên ứng dụng Shopee để nhanh chóng cập nhật tiến trình xử lý khiếu nại Trả hàng/Hoàn tiền.
+Relevant evidence found: Yes, first marker rank 1
+Gold-marker coverage: 2/2 across gold-source chunks in top-3
+Agent answer: not evaluated in this shared retrieval benchmark.
+Retrieval score: 2/2
+
+============================================================
+Q3
+Query: Sản phẩm của tôi cần đáp ứng các điều kiện cơ bản nào để được bảo hành?
+Filter: None
+Gold answer: Còn thời hạn bảo hành (dựa trên tem/phiếu bảo hành/hoặc thời điểm kích hoạt bảo hành điện tử); còn tem/phiếu bảo hành; sản phẩm bị lỗi kỹ thuật không phải do lỗi của Người Mua.
+Gold source: buyer-warranty-policy.md
+
+Top 1
+score: 0.7073
+doc_id: buyer-warranty-policy
+audience: buyer
+content: Điều kiện bảo hành đối với hàng hóa
+- Còn thời hạn bảo hành (dựa trên tem/phiếu bảo hành/hoặc thời điểm kích hoạt bảo hành điện tử).
+- Còn tem/phiếu bảo hành.
+- Sản phẩm bị lỗi kỹ thuật không phải do lỗi của Người Mua.
+
+Người Mua cần lưu ý về một số trường hợp có thể phát sinh chi phí: sản phẩm hết thời hạn bảo hành; sản phẩm bị bể, biến dạng, cháy, nổ, ẩm thấp trong động cơ do người sử dụng; hoặc các trường hợp khác theo Chính sách bảo hành của sản phẩm, dịch vụ được công bố bởi Người Bán và/ho
+
+Top 2
+score: 0.6524
+doc_id: buyer-warranty-policy
+audience: buyer
+content: Điều kiện bảo hành đối với hàng hóa
+Các điều kiện bảo hành được liệt kê dưới đây là các điều kiện cơ bản mà Shopee khuyến cáo Người Mua cần hiểu rõ mỗi khi mua sản phẩm/dịch vụ trên Sàn TMĐT Shopee. Trong mọi trường hợp Người Mua cần tham khảo Chính sách bảo hành đối với hàng hóa, dịch vụ tương ứng trong phần mô tả sản phẩm, dịch vụ được đăng bán của Người Bán và việc bảo hành sẽ chỉ được thực hiện theo Chính sách bảo hành đã được công bố của Người Bán và/hoặc Nhà sản xuất.
+
+Top 3
+score: 0.6245
+doc_id: buyer-warranty-policy
+audience: buyer
+content: Điều kiện bảo hành đối với hàng hóa
+Khi đáp ứng điều kiện bảo hành và khi có nhu cầu bảo hành sản phẩm, Người Mua liên hệ trực tiếp với trung tâm bảo hành Người bán hoặc của Nhà sản xuất tại địa phương (nếu có). Trường hợp Người Mua ở quá xa trung tâm bảo hành hoặc có bất tiện khác không thể đến bảo hành trực tiếp, có thể liên hệ trực tiếp với Người Bán/Nhà sản xuất để nhận được hướng dẫn bảo hành cần thiết.
+Relevant evidence found: Yes, first marker rank 1
+Gold-marker coverage: 3/3 across gold-source chunks in top-3
+Agent answer: not evaluated in this shared retrieval benchmark.
+Retrieval score: 2/2
+
+============================================================
+Q4
+Query: Đối với khiếu nại không phải là Trả Hàng/Hoàn Tiền, Shopee xử lý vụ việc trong thời hạn bao lâu kể từ khi nhận đủ thông tin từ các bên?
+Filter: None
+Gold answer: Shopee yêu cầu các bên tranh chấp cung cấp đầy đủ thông tin/tài liệu liên quan đến vụ việc, và đưa ra hướng giải quyết trong vòng 07 ngày làm việc kể từ ngày nhận được đầy đủ các thông tin/tài liệu có liên quan; vụ việc phức tạp có thể kéo dài hơn.
+Gold source: dispute-process.md
+
+Top 1
+score: 0.8318
+doc_id: dispute-process
+audience: both
+content: Bước 3
+Khiếu nại Trả Hàng/Hoàn Tiền được xử lý theo Chính Sách Trả Hàng Và Hoàn Tiền của Shopee. Đối với các tranh chấp không phải là khiếu nại Trả Hàng/Hoàn Tiền, Shopee yêu cầu các bên tranh chấp cung cấp đầy đủ thông tin/tài liệu liên quan đến vụ việc, và đưa ra hướng giải quyết dựa trên các thông tin/tài liệu thu thập được trong vòng 07 ngày làm việc kể từ ngày nhận được đầy đủ các thông tin/tài liệu có liên quan đến vụ việc
+
+Top 2
+score: 0.7486
+doc_id: return-refund-policy
+audience: buyer
+content: 1.2. Thời gian tối đa để gửi yêu cầu trả hàng hoàn tiền cho Shopee
+Bạn vẫn có thể gửi yêu cầu Trả hàng/Hoàn tiền sau khi đã bấm nút “Đã nhận được hàng” và vẫn còn trong thời hạn 15 ngày Trả hàng/Hoàn tiền quy định của Shopee.
+
+Yêu cầu Trả hàng/Hoàn tiền của bạn sẽ được phản hồi trong vòng 3-5 ngày làm việc. Hãy theo dõi mục thông báo trên ứng dụng Shopee để nhanh chóng cập nhật tiến trình xử lý khiếu nại Trả hàng/Hoàn tiền.
+
+Top 3
+score: 0.7282
+doc_id: shopee-mall-terms
+audience: both
+content: 1.9.2. Quy trình xử lý yêu cầu trả hàng hoàn tiền của Shopee Mall áp dụng cho Người Bán tại Shopee Mall
+Người Bán tại Shopee Mall có trách nhiệm cung cấp các bằng chứng liên quan trong vòng tối đa 24 giờ kể từ khi nhận được yêu cầu của Shopee.
+Relevant evidence found: Yes, first marker rank 1
+Gold-marker coverage: 2/2 across gold-source chunks in top-3
+Agent answer: not evaluated in this shared retrieval benchmark.
+Retrieval score: 2/2
+
+============================================================
+Q5
+Query: Hãy liệt kê tất cả các lý do mà tôi có thể dùng để gửi yêu cầu Trả hàng/Hoàn tiền trên Shopee.
+Filter: None
+Gold answer: Chưa nhận được hàng; thiếu hàng; Người bán gửi sai hàng; hàng lỗi, không hoạt động; khác với mô tả; hàng đã qua sử dụng; hàng giả/nhái; đổi ý (sản phẩm còn nguyên tem, nhãn mác, bao bì).
+Gold source: return-refund-policy.md
+
+Top 1
+score: 0.7340
+doc_id: return-refund-policy
+audience: buyer
+content: 1. Điều kiện Trả hàng/Hoàn tiền của Shopee
+
+Top 2
+score: 0.6682
+doc_id: seller-listing-policy
+audience: seller
+content: 1. Đối tượng áp dụng
+Quy định này áp dụng đối với tất cả Người Bán trên Sàn TMĐT Shopee (“Sàn Shopee”).
+
+Top 3
+score: 0.6602
+doc_id: return-refund-process
+audience: buyer
+content: 4. Tiêu chí đánh giá tình trạng hàng hoàn trả của Shopee cho từng lý do khiếu nại
+Shopee sẽ kiểm tra tình trạng hàng hoàn trả dựa trên lý do của yêu cầu Trả hàng/Hoàn tiền và những bằng chứng được cung cấp.
+
+Lý do trả hàng “Hàng nguyên vẹn nhưng không còn nhu cầu” sẽ được áp dụng như sau: Chỉ áp dụng cho nhóm Người mua có hạng thành viên Kim Cương, Vàng và người dùng đăng ký thành công gói ShopeeVIP. Áp dụng trên tất cả Người bán, bao gồm Người bán thuộc hoặc không thuộc Shopee Mall (ngoại trừ c
+Relevant evidence found: No
+Gold-marker coverage: 0/8 across gold-source chunks in top-3
+Agent answer: not evaluated in this shared retrieval benchmark.
+Retrieval score: 0/2
+
+============================================================
+SUMMARY
+Strategy: HeadingAwarePolicyChunker
+Chunker parameters: HeadingAwarePolicyChunker()
+Embedding model: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+Documents: 8
+Chunks: 49
+Average chunk length: 349.00
+Q1 score: 1/2
+Q2 score: 2/2
+Q3 score: 2/2
+Q4 score: 2/2
+Q5 score: 0/2
+Total retrieval score: 7/10
+Metadata A/B:
+unfiltered: first evidence rank 2
+filtered: first evidence rank 2
+observation: unchanged
+Failure case:
+query: Q5 — Hãy liệt kê tất cả các lý do mà tôi có thể dùng để gửi yêu cầu Trả hàng/Hoàn tiền trên Shopee.
+what went wrong: content audit score was 0/2.
+likely reason: top-3 did not contain every frozen answer marker across gold-source chunks.
+possible improvement: inspect heading/context boundaries in a separate experiment; do not tune this frozen benchmark.
